@@ -17,6 +17,7 @@ static char const _license[] =
 
 
 
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -52,6 +53,7 @@ struct _HexEditor
 	GIOChannel * channel;
 	guint source;
 	gsize offset;
+	gsize size;
 	time_t time;
 
 	/* widgets */
@@ -120,6 +122,7 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	hexeditor->channel = NULL;
 	hexeditor->source = 0;
 	hexeditor->offset = 0;
+	hexeditor->size = 0;
 	hexeditor->time = 0;
 	hexeditor->window = window;
 	/* create the widget */
@@ -264,6 +267,7 @@ void hexeditor_close(HexEditor * hexeditor)
 		g_source_remove(hexeditor->source);
 	hexeditor->source = 0;
 	hexeditor->offset = 0;
+	hexeditor->size = 0;
 	hexeditor->time = 0;
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_addr));
 	gtk_text_buffer_set_text(tbuf, "", 0);
@@ -291,6 +295,7 @@ void hexeditor_close(HexEditor * hexeditor)
 static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 		gpointer data);
 static gboolean _open_on_idle(gpointer data);
+static void _open_progress(HexEditor * hexeditor);
 static void _open_read_1(HexEditor * hexeditor, char * buf, gsize pos);
 static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos);
 
@@ -298,6 +303,7 @@ int hexeditor_open(HexEditor * hexeditor, char const * filename)
 {
 	char buf[256];
 	gchar * p;
+	struct stat st;
 
 	hexeditor_close(hexeditor);
 	if((hexeditor->fd = open(filename, O_RDONLY)) < 0)
@@ -311,6 +317,12 @@ int hexeditor_open(HexEditor * hexeditor, char const * filename)
 	hexeditor->source = g_io_add_watch(hexeditor->channel, G_IO_IN,
 			_open_on_can_read, hexeditor);
 	hexeditor->offset = 0;
+	hexeditor->size = 0;
+	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(hexeditor->pg_progress),
+			0.0);
+	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(hexeditor->pg_progress), "");
+	if(fstat(hexeditor->fd, &st) == 0)
+		hexeditor->size = st.st_size;
 	hexeditor->time = time(NULL);
 	gtk_widget_show_all(hexeditor->pg_window);
 	return 0;
@@ -362,8 +374,7 @@ static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 	if((t = time(NULL)) > hexeditor->time)
 	{
 		hexeditor->time = t;
-		gtk_progress_bar_pulse(GTK_PROGRESS_BAR(
-					hexeditor->pg_progress));
+		_open_progress(hexeditor);
 	}
 	hexeditor->source = g_idle_add(_open_on_idle, hexeditor);
 	return FALSE;
@@ -376,6 +387,27 @@ static gboolean _open_on_idle(gpointer data)
 	hexeditor->source = g_io_add_watch(hexeditor->channel, G_IO_IN,
 			_open_on_can_read, hexeditor);
 	return FALSE;
+}
+
+static void _open_progress(HexEditor * hexeditor)
+{
+	gdouble fraction;
+	char buf[16];
+
+	if(hexeditor->size == 0)
+	{
+		gtk_progress_bar_pulse(GTK_PROGRESS_BAR(
+					hexeditor->pg_progress));
+		return;
+	}
+	fraction = hexeditor->offset;
+	fraction = fraction / hexeditor->size;
+	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(
+				hexeditor->pg_progress),
+			fraction);
+	snprintf(buf, sizeof(buf), "%.1lf%%", fraction * 100);
+	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(
+				hexeditor->pg_progress), buf);
 }
 
 static void _open_read_1(HexEditor * hexeditor, char * buf, gsize pos)
