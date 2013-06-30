@@ -63,6 +63,9 @@ struct _HexEditor
 	GtkWidget * view_addr;
 	GtkWidget * view_hex;
 	GtkWidget * view_data;
+	/* progress */
+	GtkWidget * pg_window;
+	GtkWidget * pg_progress;
 };
 
 
@@ -74,6 +77,9 @@ static int _hexeditor_error(HexEditor * hexeditor, char const * message,
 static void _hexeditor_on_open(gpointer data);
 #ifdef EMBEDDED
 static void _hexeditor_on_preferences(gpointer data);
+#endif
+static gboolean _hexeditor_on_progress_delete(gpointer data);
+#ifdef EMBEDDED
 static void _hexeditor_on_properties(gpointer data);
 #endif
 
@@ -180,6 +186,27 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 	hexeditor_set_font(hexeditor, NULL);
+	/* progress */
+	hexeditor->pg_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_container_set_border_width(GTK_CONTAINER(hexeditor->pg_window), 16);
+	gtk_window_set_decorated(GTK_WINDOW(hexeditor->pg_window), FALSE);
+	gtk_window_set_default_size(GTK_WINDOW(hexeditor->pg_window), 200, 50);
+	gtk_window_set_modal(GTK_WINDOW(hexeditor->pg_window), TRUE);
+	gtk_window_set_transient_for(GTK_WINDOW(hexeditor->pg_window),
+			GTK_WINDOW(hexeditor->window));
+	gtk_window_set_position(GTK_WINDOW(hexeditor->pg_window),
+			GTK_WIN_POS_CENTER_ON_PARENT);
+	g_signal_connect_swapped(hexeditor->pg_window, "delete-event",
+			G_CALLBACK(_hexeditor_on_progress_delete), hexeditor);
+	hbox = gtk_hbox_new(FALSE, 4);
+	hexeditor->pg_progress = gtk_progress_bar_new();
+	gtk_box_pack_start(GTK_BOX(hbox), hexeditor->pg_progress, FALSE, TRUE,
+			0);
+	widget = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+	g_signal_connect_swapped(widget, "clicked", G_CALLBACK(hexeditor_close),
+			hexeditor);
+	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
+	gtk_container_add(GTK_CONTAINER(hexeditor->pg_window), hbox);
 	if(filename != NULL)
 		hexeditor_open(hexeditor, filename);
 	gtk_widget_show_all(vbox);
@@ -244,16 +271,19 @@ void hexeditor_close(HexEditor * hexeditor)
 		g_io_channel_shutdown(hexeditor->channel, TRUE, NULL);
 		g_io_channel_unref(hexeditor->channel);
 		hexeditor->channel = NULL;
+		hexeditor->fd = -1;
 	}
 	if(hexeditor->fd >= 0 && close(hexeditor->fd) != 0)
 		_hexeditor_error(hexeditor, strerror(errno), 1);
 	hexeditor->fd = -1;
+	gtk_widget_hide(hexeditor->pg_window);
 }
 
 
 /* hexeditor_open */
 static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 		gpointer data);
+static gboolean _open_on_idle(gpointer data);
 static void _open_read_1(HexEditor * hexeditor, char * buf, gsize pos);
 static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos);
 
@@ -267,6 +297,7 @@ int hexeditor_open(HexEditor * hexeditor, char const * filename)
 	hexeditor->source = g_io_add_watch(hexeditor->channel, G_IO_IN,
 			_open_on_can_read, hexeditor);
 	hexeditor->offset = 0;
+	gtk_widget_show_all(hexeditor->pg_window);
 	return 0;
 }
 
@@ -292,6 +323,7 @@ static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 		hexeditor_close(hexeditor);
 		_hexeditor_error(hexeditor, error->message, 1);
 		g_error_free(error);
+		gtk_widget_hide(hexeditor->pg_window);
 		return FALSE;
 	}
 	/* read until the end of a line */
@@ -307,9 +339,22 @@ static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 	if(status != G_IO_STATUS_NORMAL)
 	{
 		hexeditor->source = 0;
+		gtk_widget_hide(hexeditor->pg_window);
 		return FALSE;
 	}
-	return TRUE;
+	/* FIXME do not pulse so often */
+	gtk_progress_bar_pulse(GTK_PROGRESS_BAR(hexeditor->pg_progress));
+	hexeditor->source = g_idle_add(_open_on_idle, hexeditor);
+	return FALSE;
+}
+
+static gboolean _open_on_idle(gpointer data)
+{
+	HexEditor * hexeditor = data;
+
+	hexeditor->source = g_io_add_watch(hexeditor->channel, G_IO_IN,
+			_open_on_can_read, hexeditor);
+	return FALSE;
 }
 
 static void _open_read_1(HexEditor * hexeditor, char * buf, gsize pos)
@@ -490,8 +535,20 @@ static void _hexeditor_on_preferences(gpointer data)
 
 	hexeditor_show_preferences(hexeditor, TRUE);
 }
+#endif
 
 
+/* hexeditor_on_progress_delete */
+static gboolean _hexeditor_on_progress_delete(gpointer data)
+{
+	HexEditor * hexeditor = data;
+
+	gtk_widget_show(hexeditor->pg_window);
+	return TRUE;
+}
+
+
+#ifdef EMBEDDED
 /* hexeditor_on_properties */
 static void _hexeditor_on_properties(gpointer data)
 {
