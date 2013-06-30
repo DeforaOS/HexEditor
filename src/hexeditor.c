@@ -153,6 +153,8 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(
 				widget));
 	hexeditor->view_addr = gtk_text_view_new();
+	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(hexeditor->view_addr),
+			FALSE);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(hexeditor->view_addr), FALSE);
 	gtk_container_add(GTK_CONTAINER(widget), hexeditor->view_addr);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
@@ -161,6 +163,8 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	hexeditor->view_hex = gtk_text_view_new();
+	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(hexeditor->view_hex),
+			FALSE);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(hexeditor->view_hex), FALSE);
 	gtk_container_add(GTK_CONTAINER(widget), hexeditor->view_hex);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, TRUE, TRUE, 4);
@@ -169,6 +173,8 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
 			GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	hexeditor->view_data = gtk_text_view_new();
+	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(hexeditor->view_data),
+			FALSE);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(hexeditor->view_data), FALSE);
 	gtk_container_add(GTK_CONTAINER(widget), hexeditor->view_data);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
