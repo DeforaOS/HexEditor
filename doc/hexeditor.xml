@@ -65,7 +65,7 @@
 	<refsect1 id="bugs">
 		<title>Bugs</title>
 		<para>Issues can be listed and reported at <ulink
-				url="http://www.defora.org/os/project/bug_list/4000/HexEditor"/>.</para>
+				url="http://www.defora.org/os/project/bug_list/4300/HexEditor"/>.</para>
 	</refsect1>
 </refentry>
 <!-- vim: set noet ts=1 sw=1 sts=1 tw=80: -->
