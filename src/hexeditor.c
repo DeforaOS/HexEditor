@@ -22,6 +22,7 @@ static char const _license[] =
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 #include <errno.h>
 #include <libintl.h>
 #include <gtk/gtk.h>
@@ -51,6 +52,7 @@ struct _HexEditor
 	GIOChannel * channel;
 	guint source;
 	gsize offset;
+	time_t time;
 
 	/* widgets */
 	GtkWidget * widget;
@@ -118,6 +120,7 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	hexeditor->channel = NULL;
 	hexeditor->source = 0;
 	hexeditor->offset = 0;
+	hexeditor->time = 0;
 	hexeditor->window = window;
 	/* create the widget */
 	hexeditor->bold = pango_font_description_new();
@@ -260,6 +263,7 @@ void hexeditor_close(HexEditor * hexeditor)
 		g_source_remove(hexeditor->source);
 	hexeditor->source = 0;
 	hexeditor->offset = 0;
+	hexeditor->time = 0;
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_addr));
 	gtk_text_buffer_set_text(tbuf, "", 0);
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_hex));
@@ -297,6 +301,7 @@ int hexeditor_open(HexEditor * hexeditor, char const * filename)
 	hexeditor->source = g_io_add_watch(hexeditor->channel, G_IO_IN,
 			_open_on_can_read, hexeditor);
 	hexeditor->offset = 0;
+	hexeditor->time = time(NULL);
 	gtk_widget_show_all(hexeditor->pg_window);
 	return 0;
 }
@@ -310,6 +315,7 @@ static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 	gsize size;
 	GError * error = NULL;
 	gsize i;
+	time_t t;
 
 	if(channel != hexeditor->channel || condition != G_IO_IN)
 		return FALSE;
@@ -342,8 +348,13 @@ static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 		gtk_widget_hide(hexeditor->pg_window);
 		return FALSE;
 	}
-	/* FIXME do not pulse so often */
-	gtk_progress_bar_pulse(GTK_PROGRESS_BAR(hexeditor->pg_progress));
+	/* pulse the progress bar once per second */
+	if((t = time(NULL)) > hexeditor->time)
+	{
+		hexeditor->time = t;
+		gtk_progress_bar_pulse(GTK_PROGRESS_BAR(
+					hexeditor->pg_progress));
+	}
 	hexeditor->source = g_idle_add(_open_on_idle, hexeditor);
 	return FALSE;
 }
