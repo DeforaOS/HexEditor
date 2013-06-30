@@ -195,6 +195,7 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	gtk_window_set_decorated(GTK_WINDOW(hexeditor->pg_window), FALSE);
 	gtk_window_set_default_size(GTK_WINDOW(hexeditor->pg_window), 200, 50);
 	gtk_window_set_modal(GTK_WINDOW(hexeditor->pg_window), TRUE);
+	gtk_window_set_title(GTK_WINDOW(hexeditor->pg_window), _("Progress"));
 	gtk_window_set_transient_for(GTK_WINDOW(hexeditor->pg_window),
 			GTK_WINDOW(hexeditor->window));
 	gtk_window_set_position(GTK_WINDOW(hexeditor->pg_window),
@@ -281,6 +282,8 @@ void hexeditor_close(HexEditor * hexeditor)
 		_hexeditor_error(hexeditor, strerror(errno), 1);
 	hexeditor->fd = -1;
 	gtk_widget_hide(hexeditor->pg_window);
+	gtk_window_set_title(GTK_WINDOW(hexeditor->window),
+			_("Hexadecimal editor"));
 }
 
 
@@ -293,9 +296,16 @@ static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos);
 
 int hexeditor_open(HexEditor * hexeditor, char const * filename)
 {
+	char buf[256];
+	gchar * p;
+
 	hexeditor_close(hexeditor);
 	if((hexeditor->fd = open(filename, O_RDONLY)) < 0)
 		return -_hexeditor_error(hexeditor, strerror(errno), 1);
+	p = g_filename_display_name(filename);
+	snprintf(buf, sizeof(buf), "%s - %s", _("Hexadecimal editor"), p);
+	g_free(p);
+	gtk_window_set_title(GTK_WINDOW(hexeditor->window), buf);
 	hexeditor->channel = g_io_channel_unix_new(hexeditor->fd);
 	g_io_channel_set_encoding(hexeditor->channel, NULL, NULL);
 	hexeditor->source = g_io_add_watch(hexeditor->channel, G_IO_IN,

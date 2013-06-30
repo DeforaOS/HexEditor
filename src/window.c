@@ -127,6 +127,15 @@ HexEditorWindow * hexeditorwindow_new(char const * filename)
 		return NULL;
 	group = gtk_accel_group_new();
 	hexeditor->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_default_size(GTK_WINDOW(hexeditor->window), 600, 400);
+#if GTK_CHECK_VERSION(2, 6, 0)
+	gtk_window_set_icon_name(GTK_WINDOW(hexeditor->window),
+			"text-editor");
+#endif
+	gtk_window_set_title(GTK_WINDOW(hexeditor->window),
+			_("Hexadecimal editor"));
+	g_signal_connect_swapped(hexeditor->window, "delete-event", G_CALLBACK(
+				_hexeditorwindow_on_closex), hexeditor);
 	hexeditor->hexeditor = NULL;
 	if(hexeditor->window != NULL)
 	{
@@ -141,14 +150,6 @@ HexEditorWindow * hexeditorwindow_new(char const * filename)
 	}
 	gtk_window_add_accel_group(GTK_WINDOW(hexeditor->window), group);
 	g_object_unref(group);
-	gtk_window_set_default_size(GTK_WINDOW(hexeditor->window), 600, 400);
-#if GTK_CHECK_VERSION(2, 6, 0)
-	gtk_window_set_icon_name(GTK_WINDOW(hexeditor->window),
-			"text-editor");
-#endif
-	gtk_window_set_title(GTK_WINDOW(hexeditor->window), "HexEditor");
-	g_signal_connect_swapped(hexeditor->window, "delete-event", G_CALLBACK(
-				_hexeditorwindow_on_closex), hexeditor);
 #if GTK_CHECK_VERSION(3, 0, 0)
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 #else
