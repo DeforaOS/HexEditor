@@ -248,6 +248,8 @@ void hexeditor_close(HexEditor * hexeditor)
 /* hexeditor_open */
 static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 		gpointer data);
+static void _open_read_1(HexEditor * hexeditor, char * buf, gsize pos);
+static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos);
 
 int hexeditor_open(HexEditor * hexeditor, char const * filename)
 {
@@ -270,13 +272,7 @@ static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 	char buf[BUFSIZ];
 	gsize size;
 	GError * error = NULL;
-	char buf2[16];
-	GtkTextBuffer * taddr;
-	GtkTextBuffer * thex;
-	GtkTextBuffer * tdata;
 	gsize i;
-	GtkTextIter iter;
-	int c;
 
 	if(channel != hexeditor->channel || condition != G_IO_IN)
 		return FALSE;
@@ -292,47 +288,15 @@ static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 		g_error_free(error);
 		return FALSE;
 	}
-	/* FIXME optimize */
-	taddr = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_addr));
-	thex = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_hex));
-	tdata = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_data));
-	for(i = 0; i < size; i++)
-	{
-		c = (unsigned char)buf[i];
-		if(((hexeditor->offset + i) % 16) == 0)
-		{
-			/* address */
-			gtk_text_buffer_get_end_iter(taddr, &iter);
-			snprintf(buf2, sizeof(buf2), "%s%08x",
-					(hexeditor->offset + i) ? "\n" : "",
-					(unsigned int)(hexeditor->offset + i));
-			gtk_text_buffer_insert(taddr, &iter, buf2, -1);
-			/* hexadecimal value */
-			gtk_text_buffer_get_end_iter(thex, &iter);
-			gtk_text_buffer_get_end_iter(thex, &iter);
-			snprintf(buf2, sizeof(buf2), "%s%02x",
-					(hexeditor->offset + i) ? "\n" : "", c);
-			gtk_text_buffer_insert(thex, &iter, buf2, -1);
-			if(hexeditor->offset + i != 0)
-			{
-				/* character value */
-				gtk_text_buffer_get_end_iter(tdata, &iter);
-				gtk_text_buffer_insert(tdata, &iter, "\n", 1);
-			}
-		}
-		else
-		{
-			/* hexadecimal value */
-			gtk_text_buffer_get_end_iter(thex, &iter);
-			snprintf(buf2, sizeof(buf2), " %02x", c);
-			gtk_text_buffer_insert(thex, &iter, buf2, -1);
-		}
-		/* character value */
-		gtk_text_buffer_get_end_iter(tdata, &iter);
-		snprintf(buf2, sizeof(buf2), "%c", isascii(c) && isprint(c)
-				? c : '.');
-		gtk_text_buffer_insert(tdata, &iter, buf2, -1);
-	}
+	/* read until the end of a line */
+	for(i = 0; ((hexeditor->offset + i) % 16) != 0 && i < size; i++)
+		_open_read_1(hexeditor, buf, i);
+	/* read complete lines */
+	for(; i + 15 < size; i += 16)
+		_open_read_16(hexeditor, buf, i);
+	/* read until the end of the buffer */
+	for(; i < size; i++)
+		_open_read_1(hexeditor, buf, i);
 	hexeditor->offset += i;
 	if(status != G_IO_STATUS_NORMAL)
 	{
@@ -340,6 +304,94 @@ static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 		return FALSE;
 	}
 	return TRUE;
+}
+
+static void _open_read_1(HexEditor * hexeditor, char * buf, gsize pos)
+{
+	char buf2[16];
+	GtkTextBuffer * taddr;
+	GtkTextBuffer * thex;
+	GtkTextBuffer * tdata;
+	GtkTextIter iter;
+	int c;
+
+	taddr = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_addr));
+	thex = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_hex));
+	tdata = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_data));
+	c = (unsigned char)buf[pos];
+	if(((hexeditor->offset + pos) % 16) == 0)
+	{
+		/* address */
+		snprintf(buf2, sizeof(buf2), "%s%08x",
+				(hexeditor->offset + pos) ? "\n" : "",
+				(unsigned int)(hexeditor->offset + pos));
+		gtk_text_buffer_get_end_iter(taddr, &iter);
+		gtk_text_buffer_insert(taddr, &iter, buf2, -1);
+		/* hexadecimal value */
+		snprintf(buf2, sizeof(buf2), "%s%02x",
+				(hexeditor->offset + pos) ? "\n" : "", c);
+		gtk_text_buffer_get_end_iter(thex, &iter);
+		gtk_text_buffer_insert(thex, &iter, buf2, -1);
+		if(hexeditor->offset + pos != 0)
+		{
+			/* character value */
+			gtk_text_buffer_get_end_iter(tdata, &iter);
+			gtk_text_buffer_insert(tdata, &iter, "\n", 1);
+		}
+	}
+	else
+	{
+		/* hexadecimal value */
+		snprintf(buf2, sizeof(buf2), " %02x", c);
+		gtk_text_buffer_get_end_iter(thex, &iter);
+		gtk_text_buffer_insert(thex, &iter, buf2, -1);
+	}
+	/* character value */
+	snprintf(buf2, sizeof(buf2), "%c", isascii(c) && isprint(c) ? c : '.');
+	gtk_text_buffer_get_end_iter(tdata, &iter);
+	gtk_text_buffer_insert(tdata, &iter, buf2, -1);
+}
+
+static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos)
+{
+	GtkTextBuffer * taddr;
+	GtkTextBuffer * thex;
+	GtkTextBuffer * tdata;
+	GtkTextIter iter;
+	unsigned char c[16];
+	int i;
+	char buf2[64];
+
+	taddr = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_addr));
+	thex = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_hex));
+	tdata = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_data));
+	/* address */
+	gtk_text_buffer_get_end_iter(taddr, &iter);
+	snprintf(buf2, sizeof(buf2), "%s%08x",
+			(hexeditor->offset + pos) ? "\n" : "",
+			(unsigned int)(hexeditor->offset + pos));
+	gtk_text_buffer_insert(taddr, &iter, buf2, -1);
+	/* hexadecimal values */
+	for(i = 0; i < 16; i++)
+		c[i] = (unsigned char)buf[pos + i];
+	gtk_text_buffer_get_end_iter(thex, &iter);
+	snprintf(buf2, sizeof(buf2), "%s%02x %02x %02x %02x %02x %02x %02x %02x"
+			" %02x %02x %02x %02x %02x %02x %02x %02x",
+			(hexeditor->offset + pos) ? "\n" : "",
+			c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7],
+			c[8], c[9], c[10], c[11], c[12], c[13], c[14], c[15]);
+	gtk_text_buffer_insert(thex, &iter, buf2, -1);
+	/* character values */
+	if(hexeditor->offset + pos != 0)
+	{
+		gtk_text_buffer_get_end_iter(tdata, &iter);
+		gtk_text_buffer_insert(tdata, &iter, "\n", 1);
+	}
+	gtk_text_buffer_get_end_iter(tdata, &iter);
+	for(i = 0; i < 16; i++)
+		if(!isascii(c[i]) || !isprint(c[i]))
+			c[i] = '.';
+	gtk_text_buffer_insert(tdata, &iter, (char const *)c, 16);
 }
 
 
