@@ -305,6 +305,8 @@ int hexeditor_open(HexEditor * hexeditor, char const * filename)
 	gchar * p;
 	struct stat st;
 
+	if(filename == NULL)
+		return hexeditor_open_dialog(hexeditor);
 	hexeditor_close(hexeditor);
 	if((hexeditor->fd = open(filename, O_RDONLY)) < 0)
 		return -_hexeditor_error(hexeditor, strerror(errno), 1);
@@ -499,6 +501,35 @@ static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos)
 }
 
 
+/* hexeditor_open_dialog */
+int hexeditor_open_dialog(HexEditor * hexeditor)
+{
+	int ret;
+	GtkWidget * dialog;
+	GtkFileFilter * filter;
+	gchar * filename = NULL;
+
+	dialog = gtk_file_chooser_dialog_new(_("Open file..."),
+			GTK_WINDOW(hexeditor->window),
+			GTK_FILE_CHOOSER_ACTION_OPEN,
+			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+			GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
+	filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("All files"));
+	gtk_file_filter_add_pattern(filter, "*");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
+	if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(
+					dialog));
+	gtk_widget_destroy(dialog);
+	if(filename == NULL)
+		return -1;
+	ret = hexeditor_open(hexeditor, filename);
+	g_free(filename);
+	return ret;
+}
+
+
 /* hexeditor_show_preferences */
 void hexeditor_show_preferences(HexEditor * hexeditor, gboolean show)
 {
@@ -576,7 +607,9 @@ static int _error_text(char const * message, int ret)
 /* hexeditor_on_open */
 static void _hexeditor_on_open(gpointer data)
 {
-	/* FIXME implement */
+	HexEditor * hexeditor = data;
+
+	hexeditor_open_dialog(hexeditor);
 }
 
 

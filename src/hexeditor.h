@@ -37,6 +37,7 @@ void hexeditor_set_font(HexEditor * hexeditor, char const * font);
 /* useful */
 void hexeditor_close(HexEditor * hexeditor);
 int hexeditor_open(HexEditor * hexeditor, char const * filename);
+int hexeditor_open_dialog(HexEditor * hexeditor);
 
 void hexeditor_show_preferences(HexEditor * hexeditor, gboolean show);
 void hexeditor_show_properties(HexEditor * hexeditor, gboolean show);

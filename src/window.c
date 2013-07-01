@@ -47,10 +47,12 @@ struct _HexEditorWindow
 static void _hexeditorwindow_on_close(gpointer data);
 static gboolean _hexeditorwindow_on_closex(gpointer data);
 static void _hexeditorwindow_on_contents(gpointer data);
+static void _hexeditorwindow_on_open(gpointer data);
 
 #ifndef EMBEDDED
 /* menus */
 static void _hexeditorwindow_on_file_close(gpointer data);
+static void _hexeditorwindow_on_file_open(gpointer data);
 static void _hexeditorwindow_on_file_properties(gpointer data);
 static void _hexeditorwindow_on_edit_preferences(gpointer data);
 static void _hexeditorwindow_on_help_about(gpointer data);
@@ -80,6 +82,9 @@ static const DesktopAccel _hexeditorwindow_accel[] =
 /* menus */
 static const DesktopMenu _hexeditorwindow_menu_file[] =
 {
+	{ "_Open", G_CALLBACK(_hexeditorwindow_on_file_open), GTK_STOCK_OPEN,
+		GDK_CONTROL_MASK, GDK_KEY_O },
+	{ "", NULL, NULL, 0, 0 },
 	{ "_Properties", G_CALLBACK(_hexeditorwindow_on_file_properties),
 		GTK_STOCK_PROPERTIES, GDK_MOD1_MASK, GDK_KEY_Return },
 	{ "", NULL, NULL, 0, 0 },
@@ -223,6 +228,15 @@ static void _hexeditorwindow_on_file_close(gpointer data)
 }
 
 
+/* hexeditorwindow_on_file_open */
+static void _hexeditorwindow_on_file_open(gpointer data)
+{
+	HexEditorWindow * hexeditor = data;
+
+	_hexeditorwindow_on_open(hexeditor);
+}
+
+
 /* hexeditorwindow_on_file_properties */
 static void _hexeditorwindow_on_file_properties(gpointer data)
 {
@@ -272,3 +286,12 @@ static void _hexeditorwindow_on_help_contents(gpointer data)
 	_hexeditorwindow_on_contents(hexeditor);
 }
 #endif
+
+
+/* hexeditorwindow_on_open */
+static void _hexeditorwindow_on_open(gpointer data)
+{
+	HexEditorWindow * hexeditor = data;
+
+	hexeditor_open_dialog(hexeditor->hexeditor);
+}
