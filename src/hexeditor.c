@@ -20,6 +20,7 @@ static char const _license[] =
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -100,6 +101,7 @@ typedef enum _HexEditorPluginColumn
 
 /* prototypes */
 /* accessors */
+static String * _hexeditor_get_config_filename(char const * filename);
 static int _hexeditor_plugin_is_enabled(HexEditor * hexeditor,
 		char const * plugin);
 
@@ -781,6 +783,17 @@ void hexeditor_show_properties(HexEditor * hexeditor, gboolean show)
 /* private */
 /* functions */
 /* accessors */
+/* hexeditor_get_config_filename */
+static String * _hexeditor_get_config_filename(char const * filename)
+{
+	char const * homedir;
+
+	if((homedir = getenv("HOME")) == NULL)
+		homedir = g_get_home_dir();
+	return string_new_append(homedir, "/", filename, NULL);
+}
+
+
 /* hexeditor_plugin_is_enabled */
 static int _hexeditor_plugin_is_enabled(HexEditor * hexeditor,
 		char const * plugin)
@@ -808,8 +821,18 @@ static int _hexeditor_plugin_is_enabled(HexEditor * hexeditor,
 /* hexeditor_config_load */
 static int _hexeditor_config_load(HexEditor * hexeditor)
 {
-	/* FIXME really implement */
-	return -1;
+	int ret;
+	String * filename;
+
+	if(hexeditor->config == NULL)
+		return -1; /* XXX report error */
+	if((filename = _hexeditor_get_config_filename(HEXEDITOR_CONFIG_FILE))
+			== NULL)
+		return -1;
+	if((ret = config_load(hexeditor->config, filename)) != 0)
+		ret = -_hexeditor_error(NULL, error_get(), 1);
+	free(filename);
+	return ret;
 }
 
 

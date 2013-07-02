@@ -21,7 +21,11 @@
 # include "HexEditor.h"
 
 
-/* public */
+/* protected */
+/* constants */
+# define HEXEDITOR_CONFIG_FILE ".hexeditor"
+
+
 /* functions */
 HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 		char const * device);
