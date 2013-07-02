@@ -132,7 +132,7 @@ HexEditorWindow * hexeditorwindow_new(char const * filename)
 		return NULL;
 	group = gtk_accel_group_new();
 	hexeditor->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_default_size(GTK_WINDOW(hexeditor->window), 600, 400);
+	gtk_window_set_default_size(GTK_WINDOW(hexeditor->window), 640, 480);
 #if GTK_CHECK_VERSION(2, 6, 0)
 	gtk_window_set_icon_name(GTK_WINDOW(hexeditor->window),
 			"text-editor");
