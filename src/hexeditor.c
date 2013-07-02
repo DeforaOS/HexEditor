@@ -154,6 +154,7 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	GtkWidget * hbox;
 	GtkWidget * widget;
 	GtkAdjustment * adjustment;
+	char const * p;
 
 	if((hexeditor = object_new(sizeof(*hexeditor))) == NULL)
 		return NULL;
@@ -170,12 +171,6 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	hexeditor->bold = pango_font_description_new();
 	pango_font_description_set_weight(hexeditor->bold, PANGO_WEIGHT_BOLD);
 	hexeditor->window = window;
-	/* check for errors */
-	if(hexeditor->config == NULL)
-	{
-		hexeditor_delete(hexeditor);
-		return NULL;
-	}
 	/* create the widget */
 #if GTK_CHECK_VERSION(3, 0, 0)
 	hexeditor->widget = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -243,7 +238,9 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	gtk_paned_add1(GTK_PANED(hpaned), hbox);
 	gtk_box_pack_start(GTK_BOX(vbox), hpaned, TRUE, TRUE, 0);
-	hexeditor_set_font(hexeditor, NULL);
+	p = (hexeditor->config != NULL)
+		? config_get(hexeditor->config, NULL, "font") : NULL;
+	hexeditor_set_font(hexeditor, p);
 	gtk_widget_set_sensitive(hexeditor->view_addr, FALSE);
 	gtk_widget_set_sensitive(hexeditor->view_hex, FALSE);
 	gtk_widget_set_sensitive(hexeditor->view_data, FALSE);
