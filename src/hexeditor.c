@@ -104,6 +104,7 @@ static int _hexeditor_plugin_is_enabled(HexEditor * hexeditor,
 		char const * plugin);
 
 /* useful */
+static int _hexeditor_config_load(HexEditor * hexeditor);
 static int _hexeditor_error(HexEditor * hexeditor, char const * message,
 		int ret);
 
@@ -154,7 +155,10 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 
 	if((hexeditor = object_new(sizeof(*hexeditor))) == NULL)
 		return NULL;
-	hexeditor->config = config_new();
+	if((hexeditor->config = config_new()) == NULL
+			|| _hexeditor_config_load(hexeditor) != 0)
+		_hexeditor_error(NULL, _("Error while loading configuration"),
+				1);
 	hexeditor->fd = -1;
 	hexeditor->channel = NULL;
 	hexeditor->source = 0;
@@ -789,6 +793,14 @@ static int _hexeditor_plugin_is_enabled(HexEditor * hexeditor,
 
 
 /* useful */
+/* hexeditor_config_load */
+static int _hexeditor_config_load(HexEditor * hexeditor)
+{
+	/* FIXME really implement */
+	return -1;
+}
+
+
 /* hexeditor_error */
 static int _error_text(char const * message, int ret);
 
