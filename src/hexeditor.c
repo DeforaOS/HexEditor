@@ -205,6 +205,7 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 #endif
 	/* view */
 	hpaned = gtk_hpaned_new();
+	gtk_paned_set_position(GTK_PANED(hpaned), 500);
 	hbox = gtk_hbox_new(FALSE, 0);
 	/* view: address */
 	widget = gtk_scrolled_window_new(NULL, NULL);
@@ -241,6 +242,9 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	gtk_paned_add1(GTK_PANED(hpaned), hbox);
 	gtk_box_pack_start(GTK_BOX(vbox), hpaned, TRUE, TRUE, 0);
 	hexeditor_set_font(hexeditor, NULL);
+	gtk_widget_set_sensitive(hexeditor->view_addr, FALSE);
+	gtk_widget_set_sensitive(hexeditor->view_hex, FALSE);
+	gtk_widget_set_sensitive(hexeditor->view_data, FALSE);
 	_new_progress(hexeditor);
 	_new_plugins(hexeditor);
 	gtk_paned_add2(GTK_PANED(hpaned), hexeditor->pl_view);
@@ -427,6 +431,9 @@ void hexeditor_close(HexEditor * hexeditor)
 		_hexeditor_error(hexeditor, strerror(errno), 1);
 	hexeditor->fd = -1;
 	gtk_widget_hide(hexeditor->pg_window);
+	gtk_widget_set_sensitive(hexeditor->view_addr, FALSE);
+	gtk_widget_set_sensitive(hexeditor->view_hex, FALSE);
+	gtk_widget_set_sensitive(hexeditor->view_data, FALSE);
 	gtk_window_set_title(GTK_WINDOW(hexeditor->window),
 			_("Hexadecimal editor"));
 }
@@ -542,7 +549,6 @@ static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 	gsize size;
 	GError * error = NULL;
 	gsize i;
-	time_t t;
 
 	if(channel != hexeditor->channel || condition != G_IO_IN)
 		return FALSE;
@@ -551,11 +557,14 @@ static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 	if(status == G_IO_STATUS_AGAIN)
 		/* this status can be ignored */
 		return TRUE;
-	if(status == G_IO_STATUS_ERROR)
+	if(status != G_IO_STATUS_NORMAL && status != G_IO_STATUS_EOF)
 	{
 		hexeditor_close(hexeditor);
-		_hexeditor_error(hexeditor, error->message, 1);
-		g_error_free(error);
+		if(status == G_IO_STATUS_ERROR)
+		{
+			_hexeditor_error(hexeditor, error->message, 1);
+			g_error_free(error);
+		}
 		gtk_widget_hide(hexeditor->pg_window);
 		return FALSE;
 	}
@@ -569,18 +578,16 @@ static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 	for(; i < size; i++)
 		_open_read_1(hexeditor, buf, i);
 	hexeditor->offset += i;
-	if(status != G_IO_STATUS_NORMAL)
+	if(status == G_IO_STATUS_EOF)
 	{
 		hexeditor->source = 0;
+		gtk_widget_set_sensitive(hexeditor->view_addr, TRUE);
+		gtk_widget_set_sensitive(hexeditor->view_hex, TRUE);
+		gtk_widget_set_sensitive(hexeditor->view_data, TRUE);
 		gtk_widget_hide(hexeditor->pg_window);
 		return FALSE;
 	}
-	/* pulse the progress bar once per second */
-	if((t = time(NULL)) > hexeditor->time)
-	{
-		hexeditor->time = t;
-		_open_progress(hexeditor);
-	}
+	_open_progress(hexeditor);
 	hexeditor->source = g_idle_add(_open_on_idle, hexeditor);
 	return FALSE;
 }
@@ -596,9 +603,14 @@ static gboolean _open_on_idle(gpointer data)
 
 static void _open_progress(HexEditor * hexeditor)
 {
+	time_t t;
 	gdouble fraction;
 	char buf[16];
 
+	/* pulse the progress bar once per second */
+	if((t = time(NULL)) <= hexeditor->time)
+		return;
+	hexeditor->time = t;
 	if(hexeditor->size == 0)
 	{
 		gtk_progress_bar_pulse(GTK_PROGRESS_BAR(
