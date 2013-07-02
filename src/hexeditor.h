@@ -18,12 +18,10 @@
 #ifndef HEXEDITOR_HEXEDITOR_H
 # define HEXEDITOR_HEXEDITOR_H
 
+# include "HexEditor.h"
+
 
 /* public */
-/* types */
-typedef struct _HexEditor HexEditor;
-
-
 /* functions */
 HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 		char const * device);
@@ -38,6 +36,9 @@ void hexeditor_set_font(HexEditor * hexeditor, char const * font);
 void hexeditor_close(HexEditor * hexeditor);
 int hexeditor_open(HexEditor * hexeditor, char const * filename);
 int hexeditor_open_dialog(HexEditor * hexeditor);
+
+/* plug-ins */
+int hexeditor_load(HexEditor * hexeditor, char const * plugin);
 
 void hexeditor_show_preferences(HexEditor * hexeditor, gboolean show);
 void hexeditor_show_properties(HexEditor * hexeditor, gboolean show);

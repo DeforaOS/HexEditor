@@ -1,6 +1,6 @@
 PACKAGE	= HexEditor
 VERSION	= 0.0.0
-SUBDIRS	= data doc po src
+SUBDIRS	= data doc include po src
 RM	= rm -f
 LN	= ln -f
 TAR	= tar -czvf
@@ -28,6 +28,12 @@ dist:
 		$(PACKAGE)-$(VERSION)/doc/docbook.sh \
 		$(PACKAGE)-$(VERSION)/doc/hexeditor.xml \
 		$(PACKAGE)-$(VERSION)/doc/project.conf \
+		$(PACKAGE)-$(VERSION)/include/HexEditor.h \
+		$(PACKAGE)-$(VERSION)/include/Makefile \
+		$(PACKAGE)-$(VERSION)/include/project.conf \
+		$(PACKAGE)-$(VERSION)/include/HexEditor/plugin.h \
+		$(PACKAGE)-$(VERSION)/include/HexEditor/Makefile \
+		$(PACKAGE)-$(VERSION)/include/HexEditor/project.conf \
 		$(PACKAGE)-$(VERSION)/po/Makefile \
 		$(PACKAGE)-$(VERSION)/po/POTFILES \
 		$(PACKAGE)-$(VERSION)/po/project.conf \

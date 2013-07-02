@@ -30,6 +30,7 @@ static char const _license[] =
 #include <gdk/gdkkeysyms.h>
 #include <System.h>
 #include <Desktop.h>
+#include "HexEditor/plugin.h"
 #include "hexeditor.h"
 #include "../config.h"
 #define _(string) gettext(string)
@@ -49,6 +50,8 @@ static char const _license[] =
 /* types */
 struct _HexEditor
 {
+	Config * config;
+
 	int fd;
 	GIOChannel * channel;
 	guint source;
@@ -70,18 +73,47 @@ struct _HexEditor
 	/* progress */
 	GtkWidget * pg_window;
 	GtkWidget * pg_progress;
+	/* plug-ins */
+	GtkWidget * pl_view;
+	GtkListStore * pl_store;
+	GtkWidget * pl_combo;
+	GtkWidget * pl_box;
+	HexEditorPluginHelper pl_helper;
 };
 
 
+/* constants */
+typedef enum _HexEditorPluginColumn
+{
+	HEPC_NAME = 0,
+	HEPC_ENABLED,
+	HEPC_ICON,
+	HEPC_NAME_DISPLAY,
+	HEPC_PLUGIN,
+	HEPC_HEXEDITORPLUGINDEFINITION,
+	HEPC_HEXEDITORPLUGIN,
+	HEPC_WIDGET
+} HexEditorPluginColumn;
+#define HEPC_LAST	HEPC_WIDGET
+#define HEPC_COUNT	(HEPC_LAST + 1)
+
+
 /* prototypes */
+/* accessors */
+static int _hexeditor_plugin_is_enabled(HexEditor * hexeditor,
+		char const * plugin);
+
+/* useful */
 static int _hexeditor_error(HexEditor * hexeditor, char const * message,
 		int ret);
 
 /* callbacks */
 static void _hexeditor_on_open(gpointer data);
+static void _hexeditor_on_plugin_combo_change(gpointer data);
 #ifdef EMBEDDED
 static void _hexeditor_on_preferences(gpointer data);
 #endif
+static void _hexeditor_on_progress_cancel(gpointer data);
 static gboolean _hexeditor_on_progress_delete(gpointer data);
 #ifdef EMBEDDED
 static void _hexeditor_on_properties(gpointer data);
@@ -107,27 +139,38 @@ static DesktopToolbar _hexeditor_toolbar[] =
 /* public */
 /* functions */
 /* hexeditor_new */
+static void _new_plugins(HexEditor * hexeditor);
+static void _new_progress(HexEditor * hexeditor);
+
 HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 		char const * filename)
 {
 	HexEditor * hexeditor;
 	GtkWidget * vbox;
+	GtkWidget * hpaned;
 	GtkWidget * hbox;
 	GtkWidget * widget;
 	GtkAdjustment * adjustment;
 
 	if((hexeditor = object_new(sizeof(*hexeditor))) == NULL)
 		return NULL;
+	hexeditor->config = config_new();
 	hexeditor->fd = -1;
 	hexeditor->channel = NULL;
 	hexeditor->source = 0;
 	hexeditor->offset = 0;
 	hexeditor->size = 0;
 	hexeditor->time = 0;
-	hexeditor->window = window;
-	/* create the widget */
 	hexeditor->bold = pango_font_description_new();
 	pango_font_description_set_weight(hexeditor->bold, PANGO_WEIGHT_BOLD);
+	hexeditor->window = window;
+	/* check for errors */
+	if(hexeditor->config == NULL)
+	{
+		hexeditor_delete(hexeditor);
+		return NULL;
+	}
+	/* create the widget */
 #if GTK_CHECK_VERSION(3, 0, 0)
 	hexeditor->widget = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 #else
@@ -157,6 +200,7 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	gtk_box_pack_start(GTK_BOX(vbox), hexeditor->infobar, FALSE, TRUE, 0);
 #endif
 	/* view */
+	hpaned = gtk_hpaned_new();
 	hbox = gtk_hbox_new(FALSE, 0);
 	/* view: address */
 	widget = gtk_scrolled_window_new(NULL, NULL);
@@ -173,7 +217,7 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	/* view: hexadecimal */
 	widget = gtk_scrolled_window_new(NULL, adjustment);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
-			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+			GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	hexeditor->view_hex = gtk_text_view_new();
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(hexeditor->view_hex),
 			FALSE);
@@ -190,9 +234,80 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(hexeditor->view_data), FALSE);
 	gtk_container_add(GTK_CONTAINER(widget), hexeditor->view_data);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+	gtk_paned_add1(GTK_PANED(hpaned), hbox);
+	gtk_box_pack_start(GTK_BOX(vbox), hpaned, TRUE, TRUE, 0);
 	hexeditor_set_font(hexeditor, NULL);
-	/* progress */
+	_new_progress(hexeditor);
+	_new_plugins(hexeditor);
+	gtk_paned_add2(GTK_PANED(hpaned), hexeditor->pl_view);
+	if(filename != NULL)
+		hexeditor_open(hexeditor, filename);
+	gtk_widget_show_all(vbox);
+	return hexeditor;
+}
+
+static void _new_plugins(HexEditor * hexeditor)
+{
+	GtkCellRenderer * renderer;
+	char const * plugins;
+	char * p;
+	char * q;
+	size_t i;
+
+	hexeditor->pl_view = gtk_vbox_new(FALSE, 4);
+	gtk_container_set_border_width(GTK_CONTAINER(hexeditor->pl_view), 4);
+	hexeditor->pl_store = gtk_list_store_new(HEPC_COUNT, G_TYPE_STRING,
+			G_TYPE_BOOLEAN, GDK_TYPE_PIXBUF, G_TYPE_STRING,
+			G_TYPE_POINTER, G_TYPE_POINTER, G_TYPE_POINTER,
+			G_TYPE_POINTER);
+	hexeditor->pl_combo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(
+				hexeditor->pl_store));
+	g_signal_connect_swapped(hexeditor->pl_combo, "changed", G_CALLBACK(
+				_hexeditor_on_plugin_combo_change), hexeditor);
+	renderer = gtk_cell_renderer_pixbuf_new();
+	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(hexeditor->pl_combo),
+			renderer, FALSE);
+	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(hexeditor->pl_combo),
+			renderer, "pixbuf", HEPC_ICON, NULL);
+	renderer = gtk_cell_renderer_text_new();
+	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(hexeditor->pl_combo),
+			renderer, TRUE);
+	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(hexeditor->pl_combo),
+			renderer, "text", HEPC_NAME_DISPLAY, NULL);
+	gtk_box_pack_start(GTK_BOX(hexeditor->pl_view), hexeditor->pl_combo,
+			FALSE, TRUE, 0);
+	hexeditor->pl_box = gtk_vbox_new(FALSE, 4);
+	gtk_box_pack_start(GTK_BOX(hexeditor->pl_view), hexeditor->pl_box, TRUE,
+			FALSE, 0);
+	hexeditor->pl_helper.hexeditor = hexeditor;
+	hexeditor->pl_helper.error = _hexeditor_error;
+	/* load the plug-ins */
+	if((plugins = config_get(hexeditor->config, NULL, "plugins")) == NULL
+			|| strlen(plugins) == 0)
+		return;
+	if((p = strdup(plugins)) == NULL)
+		return; /* XXX report error */
+	for(q = p, i = 0;;)
+	{
+		if(q[i] == '\0')
+		{
+			hexeditor_load(hexeditor, q);
+			break;
+		}
+		if(q[i++] != ',')
+			continue;
+		q[i - 1] = '\0';
+		hexeditor_load(hexeditor, q);
+		q += i;
+		i = 0;
+	}
+}
+
+static void _new_progress(HexEditor * hexeditor)
+{
+	GtkWidget * hbox;
+	GtkWidget * widget;
+
 	hexeditor->pg_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_container_set_border_width(GTK_CONTAINER(hexeditor->pg_window), 16);
 	gtk_window_set_decorated(GTK_WINDOW(hexeditor->pg_window), FALSE);
@@ -210,23 +325,45 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	gtk_box_pack_start(GTK_BOX(hbox), hexeditor->pg_progress, FALSE, TRUE,
 			0);
 	widget = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-	g_signal_connect_swapped(widget, "clicked", G_CALLBACK(hexeditor_close),
-			hexeditor);
+	g_signal_connect_swapped(widget, "clicked", G_CALLBACK(
+				_hexeditor_on_progress_cancel), hexeditor);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	gtk_container_add(GTK_CONTAINER(hexeditor->pg_window), hbox);
-	if(filename != NULL)
-		hexeditor_open(hexeditor, filename);
-	gtk_widget_show_all(vbox);
-	return hexeditor;
 }
 
 
 /* hexeditor_delete */
+static void _delete_plugins(HexEditor * hexeditor);
+
 void hexeditor_delete(HexEditor * hexeditor)
 {
+	_delete_plugins(hexeditor);
 	hexeditor_close(hexeditor);
 	pango_font_description_free(hexeditor->bold);
+	if(hexeditor->config != NULL)
+		config_delete(hexeditor->config);
 	object_delete(hexeditor);
+}
+
+static void _delete_plugins(HexEditor * hexeditor)
+{
+	GtkTreeModel * model = GTK_TREE_MODEL(hexeditor->pl_store);
+	GtkTreeIter iter;
+	gboolean valid;
+	Plugin * plugin;
+	HexEditorPluginDefinition * hepd;
+	HexEditorPlugin * hep;
+
+	for(valid = gtk_tree_model_get_iter_first(model, &iter); valid == TRUE;
+			valid = gtk_tree_model_iter_next(model, &iter))
+	{
+		gtk_tree_model_get(model, &iter, HEPC_PLUGIN, &plugin,
+				HEPC_HEXEDITORPLUGINDEFINITION, &hepd,
+				HEPC_HEXEDITORPLUGIN, &hep, -1);
+		if(hepd->destroy != NULL)
+			hepd->destroy(hep);
+		plugin_delete(plugin);
+	}
 }
 
 
@@ -288,6 +425,68 @@ void hexeditor_close(HexEditor * hexeditor)
 	gtk_widget_hide(hexeditor->pg_window);
 	gtk_window_set_title(GTK_WINDOW(hexeditor->window),
 			_("Hexadecimal editor"));
+}
+
+
+/* hexeditor_load */
+int hexeditor_load(HexEditor * hexeditor, char const * plugin)
+{
+	Plugin * p;
+	HexEditorPluginDefinition * hepd;
+	HexEditorPlugin * hep;
+	GtkWidget * widget;
+	GtkTreeIter iter;
+	GtkIconTheme * theme;
+	GdkPixbuf * icon = NULL;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, plugin);
+#endif
+	if(_hexeditor_plugin_is_enabled(hexeditor, plugin))
+		return 0;
+	if((p = plugin_new(LIBDIR, PACKAGE, "plug-ins", plugin)) == NULL)
+		return -_hexeditor_error(hexeditor, error_get(), 1);
+	if((hepd = plugin_lookup(p, "plugin")) == NULL)
+	{
+		plugin_delete(p);
+		return -_hexeditor_error(hexeditor, error_get(), 1);
+	}
+	if(hepd->init == NULL || hepd->destroy == NULL
+			|| hepd->get_widget == NULL
+			|| (hep = hepd->init(&hexeditor->pl_helper)) == NULL)
+	{
+		plugin_delete(p);
+		/* FIXME the error may not be set */
+		return -_hexeditor_error(hexeditor, error_get(), 1);
+	}
+	widget = hepd->get_widget(hep);
+	gtk_widget_hide(widget);
+	theme = gtk_icon_theme_get_default();
+	if(hepd->icon != NULL)
+		icon = gtk_icon_theme_load_icon(theme, hepd->icon, 24, 0, NULL);
+	if(icon == NULL)
+		icon = gtk_icon_theme_load_icon(theme, "gnome-settings", 24, 0,
+				NULL);
+#if GTK_CHECK_VERSION(2, 6, 0)
+	gtk_list_store_insert_with_values(hexeditor->pl_store, &iter, -1,
+#else
+	gtk_list_store_append(hexeditor->pl_store, &iter);
+	gtk_list_store_set(hexeditor->pl_store, &iter,
+#endif
+			HEPC_NAME, plugin, HEPC_ICON, icon,
+			HEPC_NAME_DISPLAY, hepd->name,
+			HEPC_PLUGIN, p, HEPC_HEXEDITORPLUGINDEFINITION, hepd,
+			HEPC_HEXEDITORPLUGIN, hep, HEPC_WIDGET, widget, -1);
+	if(icon != NULL)
+		g_object_unref(icon);
+	gtk_box_pack_start(GTK_BOX(hexeditor->pl_box), widget, TRUE, TRUE, 0);
+	if(gtk_widget_get_no_show_all(hexeditor->pl_view) == TRUE)
+	{
+		gtk_combo_box_set_active(GTK_COMBO_BOX(hexeditor->pl_combo), 0);
+		gtk_widget_set_no_show_all(hexeditor->pl_view, FALSE);
+		gtk_widget_show_all(hexeditor->pl_view);
+	}
+	return 0;
 }
 
 
@@ -565,6 +764,31 @@ void hexeditor_show_properties(HexEditor * hexeditor, gboolean show)
 
 /* private */
 /* functions */
+/* accessors */
+/* hexeditor_plugin_is_enabled */
+static int _hexeditor_plugin_is_enabled(HexEditor * hexeditor,
+		char const * plugin)
+{
+	GtkTreeModel * model = GTK_TREE_MODEL(hexeditor->pl_store);
+	GtkTreeIter iter;
+	gchar * p;
+	gboolean valid;
+	int res;
+
+	for(valid = gtk_tree_model_get_iter_first(model, &iter); valid == TRUE;
+			valid = gtk_tree_model_iter_next(model, &iter))
+	{
+		gtk_tree_model_get(model, &iter, HEPC_NAME, &p, -1);
+		res = strcmp(p, plugin);
+		g_free(p);
+		if(res == 0)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+
+/* useful */
 /* hexeditor_error */
 static int _error_text(char const * message, int ret);
 
@@ -613,6 +837,13 @@ static void _hexeditor_on_open(gpointer data)
 }
 
 
+/* hexeditor_on_plugin_combo_change */
+static void _hexeditor_on_plugin_combo_change(gpointer data)
+{
+	/* FIXME implement */
+}
+
+
 #ifdef EMBEDDED
 /* hexeditor_on_preferences */
 static void _hexeditor_on_preferences(gpointer data)
@@ -622,6 +853,15 @@ static void _hexeditor_on_preferences(gpointer data)
 	hexeditor_show_preferences(hexeditor, TRUE);
 }
 #endif
+
+
+/* hexeditor_on_progress_cancel */
+static void _hexeditor_on_progress_cancel(gpointer data)
+{
+	HexEditor * hexeditor = data;
+
+	hexeditor_close(hexeditor);
+}
 
 
 /* hexeditor_on_progress_delete */
