@@ -263,6 +263,7 @@ static void _new_plugins(HexEditor * hexeditor)
 
 	hexeditor->pl_view = gtk_vbox_new(FALSE, 4);
 	gtk_container_set_border_width(GTK_CONTAINER(hexeditor->pl_view), 4);
+	gtk_widget_set_no_show_all(hexeditor->pl_view, TRUE);
 	hexeditor->pl_store = gtk_list_store_new(HEPC_COUNT, G_TYPE_STRING,
 			G_TYPE_BOOLEAN, GDK_TYPE_PIXBUF, G_TYPE_STRING,
 			G_TYPE_POINTER, G_TYPE_POINTER, G_TYPE_POINTER,
