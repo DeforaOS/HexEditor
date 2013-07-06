@@ -134,8 +134,7 @@ HexEditorWindow * hexeditorwindow_new(char const * filename)
 	hexeditor->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_default_size(GTK_WINDOW(hexeditor->window), 640, 480);
 #if GTK_CHECK_VERSION(2, 6, 0)
-	gtk_window_set_icon_name(GTK_WINDOW(hexeditor->window),
-			"text-editor");
+	gtk_window_set_icon_name(GTK_WINDOW(hexeditor->window), "text-editor");
 #endif
 	gtk_window_set_title(GTK_WINDOW(hexeditor->window),
 			_("Hexadecimal editor"));
@@ -269,6 +268,7 @@ static void _hexeditorwindow_on_help_about(gpointer data)
 	desktop_about_dialog_set_authors(widget, _authors);
 	desktop_about_dialog_set_comments(widget, _(comments));
 	desktop_about_dialog_set_copyright(widget, _copyright);
+	desktop_about_dialog_set_logo_icon_name(widget, "text-editor");
 	desktop_about_dialog_set_license(widget, _license);
 	desktop_about_dialog_set_name(widget, PACKAGE);
 	desktop_about_dialog_set_version(widget, VERSION);
