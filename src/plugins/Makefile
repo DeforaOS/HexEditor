@@ -36,10 +36,7 @@ distclean: clean
 	$(RM) -- $(TARGETS)
 
 install: $(TARGETS)
-	$(MKDIR) $(DESTDIR)$(LIBDIR)/HexEditor/plug-ins
-	$(INSTALL) -m 0644 template.so $(DESTDIR)$(LIBDIR)/HexEditor/plug-ins/template.so
 
 uninstall:
-	$(RM) -- $(DESTDIR)$(LIBDIR)/HexEditor/plug-ins/template.so
 
 .PHONY: all clean distclean install uninstall
