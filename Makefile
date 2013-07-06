@@ -43,6 +43,9 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/Makefile \
 		$(PACKAGE)-$(VERSION)/src/hexeditor.h \
 		$(PACKAGE)-$(VERSION)/src/project.conf \
+		$(PACKAGE)-$(VERSION)/src/plugins/template.c \
+		$(PACKAGE)-$(VERSION)/src/plugins/Makefile \
+		$(PACKAGE)-$(VERSION)/src/plugins/project.conf \
 		$(PACKAGE)-$(VERSION)/Makefile \
 		$(PACKAGE)-$(VERSION)/config.h \
 		$(PACKAGE)-$(VERSION)/config.sh \

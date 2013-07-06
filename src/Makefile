@@ -1,3 +1,4 @@
+SUBDIRS	= plugins
 TARGETS	= hexeditor
 PREFIX	= /usr/local
 DESTDIR	=
@@ -15,7 +16,10 @@ MKDIR	= mkdir -m 0755 -p
 INSTALL	= install
 
 
-all: $(TARGETS)
+all: subdirs $(TARGETS)
+
+subdirs:
+	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE)) || exit; done
 
 hexeditor_OBJS = hexeditor.o window.o main.o
 hexeditor_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
@@ -34,16 +38,21 @@ main.o: main.c window.h
 	$(CC) $(hexeditor_CFLAGS) -c main.c
 
 clean:
+	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) clean) || exit; done
 	$(RM) -- $(hexeditor_OBJS)
 
-distclean: clean
+distclean:
+	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) distclean) || exit; done
+	$(RM) -- $(hexeditor_OBJS)
 	$(RM) -- $(TARGETS)
 
 install: $(TARGETS)
+	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) install) || exit; done
 	$(MKDIR) $(DESTDIR)$(BINDIR)
 	$(INSTALL) -m 0755 hexeditor $(DESTDIR)$(BINDIR)/hexeditor
 
 uninstall:
+	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) uninstall) || exit; done
 	$(RM) -- $(DESTDIR)$(BINDIR)/hexeditor
 
-.PHONY: all clean distclean install uninstall
+.PHONY: all subdirs clean distclean install uninstall
