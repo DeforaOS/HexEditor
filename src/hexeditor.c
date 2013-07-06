@@ -804,6 +804,49 @@ void hexeditor_show_properties(HexEditor * hexeditor, gboolean show)
 }
 
 
+/* hexeditor_unload */
+int hexeditor_unload(HexEditor * hexeditor, char const * plugin)
+{
+	GtkTreeModel * model = GTK_TREE_MODEL(hexeditor->pl_store);
+	GtkTreeIter iter;
+	gboolean valid;
+	gchar * p;
+	Plugin * pp;
+	HexEditorPluginDefinition * hepd;
+	HexEditorPlugin * hep;
+	GtkWidget * widget;
+
+	for(valid = gtk_tree_model_get_iter_first(model, &iter); valid == TRUE;
+			valid = gtk_tree_model_iter_next(model, &iter))
+	{
+		gtk_tree_model_get(model, &iter, HEPC_NAME, &p,
+				HEPC_PLUGIN, &pp,
+				HEPC_HEXEDITORPLUGINDEFINITION, &hepd,
+				HEPC_HEXEDITORPLUGIN, &hep,
+				HEPC_WIDGET, &widget, -1);
+		if(strcmp(plugin, p) == 0)
+			break;
+		g_free(p);
+	}
+	if(valid != TRUE)
+		return 0;
+	g_free(p);
+	gtk_list_store_remove(hexeditor->pl_store, &iter);
+	gtk_container_remove(GTK_CONTAINER(hexeditor->pl_box), widget);
+	hepd->destroy(hep);
+	plugin_delete(pp);
+	if(gtk_tree_model_iter_n_children(model, NULL) == 0)
+	{
+		gtk_widget_set_no_show_all(hexeditor->pl_view, TRUE);
+		gtk_widget_hide(hexeditor->pl_view);
+	}
+	else if(gtk_combo_box_get_active(GTK_COMBO_BOX(hexeditor->pl_combo))
+			< 0)
+		gtk_combo_box_set_active(GTK_COMBO_BOX(hexeditor->pl_combo), 0);
+	return 0;
+}
+
+
 /* private */
 /* functions */
 /* accessors */

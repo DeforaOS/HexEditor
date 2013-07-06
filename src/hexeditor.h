@@ -43,6 +43,7 @@ int hexeditor_open_dialog(HexEditor * hexeditor);
 
 /* plug-ins */
 int hexeditor_load(HexEditor * hexeditor, char const * plugin);
+int hexeditor_unload(HexEditor * hexeditor, char const * plugin);
 
 void hexeditor_show_preferences(HexEditor * hexeditor, gboolean show);
 void hexeditor_show_properties(HexEditor * hexeditor, gboolean show);
