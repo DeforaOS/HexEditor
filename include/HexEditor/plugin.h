@@ -19,6 +19,7 @@
 # define DESKTOP_HEXEDITOR_PLUGIN_H
 
 # include <sys/types.h>
+# include <gtk/gtk.h>
 
 
 /* HexEditor */
