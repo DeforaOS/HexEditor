@@ -504,6 +504,8 @@ int hexeditor_load(HexEditor * hexeditor, char const * plugin)
 static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 		gpointer data);
 static gboolean _open_on_idle(gpointer data);
+static void _open_plugins_read(HexEditor * hexeditor, char const * buf,
+		size_t size);
 static void _open_progress(HexEditor * hexeditor);
 static void _open_read_1(HexEditor * hexeditor, char * buf, gsize pos);
 static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos);
@@ -576,9 +578,14 @@ static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 	/* read until the end of the buffer */
 	for(; i < size; i++)
 		_open_read_1(hexeditor, buf, i);
-	hexeditor->offset += i;
+	/* tell the plug-ins */
+	_open_plugins_read(hexeditor, buf, size);
+	hexeditor->offset += size;
 	if(status == G_IO_STATUS_EOF)
 	{
+		/* tell the plug-ins if relevant */
+		if(size != 0)
+			_open_plugins_read(hexeditor, NULL, 0);
 		hexeditor->source = 0;
 		gtk_widget_set_sensitive(hexeditor->view_addr, TRUE);
 		gtk_widget_set_sensitive(hexeditor->view_hex, TRUE);
@@ -598,6 +605,25 @@ static gboolean _open_on_idle(gpointer data)
 	hexeditor->source = g_io_add_watch(hexeditor->channel, G_IO_IN,
 			_open_on_can_read, hexeditor);
 	return FALSE;
+}
+
+static void _open_plugins_read(HexEditor * hexeditor, char const * buf,
+		size_t size)
+{
+	GtkTreeModel * model = GTK_TREE_MODEL(hexeditor->pl_store);
+	GtkTreeIter iter;
+	gboolean valid;
+	HexEditorPluginDefinition * hepd;
+	HexEditorPlugin * hep;
+
+	for(valid = gtk_tree_model_get_iter_first(model, &iter); valid == TRUE;
+			valid = gtk_tree_model_iter_next(model, &iter))
+	{
+		gtk_tree_model_get(model, &iter,
+				HEPC_HEXEDITORPLUGINDEFINITION, &hepd,
+				HEPC_HEXEDITORPLUGIN, &hep, -1);
+		hepd->read(hep, hexeditor->offset, buf, size);
+	}
 }
 
 static void _open_progress(HexEditor * hexeditor)

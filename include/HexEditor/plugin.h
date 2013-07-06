@@ -18,6 +18,8 @@
 #ifndef DESKTOP_HEXEDITOR_PLUGIN_H
 # define DESKTOP_HEXEDITOR_PLUGIN_H
 
+# include <sys/types.h>
+
 
 /* HexEditor */
 /* public */
@@ -40,6 +42,9 @@ typedef const struct _HexEditorPluginDefinition
 	HexEditorPlugin * (*init)(HexEditorPluginHelper * helper);
 	void (*destroy)(HexEditorPlugin * plugin);
 	GtkWidget * (*get_widget)(HexEditorPlugin * plugin);
+	/* file operations */
+	void (*read)(HexEditorPlugin * plugin, off_t offset,
+			char const * buffer, size_t size);
 } HexEditorPluginDefinition;
 
 #endif /* DESKTOP_HEXEDITOR_PLUGIN_H */
