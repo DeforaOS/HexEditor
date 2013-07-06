@@ -622,7 +622,8 @@ static void _open_plugins_read(HexEditor * hexeditor, char const * buf,
 		gtk_tree_model_get(model, &iter,
 				HEPC_HEXEDITORPLUGINDEFINITION, &hepd,
 				HEPC_HEXEDITORPLUGIN, &hep, -1);
-		hepd->read(hep, hexeditor->offset, buf, size);
+		if(hepd->read != NULL)
+			hepd->read(hep, hexeditor->offset, buf, size);
 	}
 }
 
