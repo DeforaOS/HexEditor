@@ -286,7 +286,7 @@ static void _new_plugins(HexEditor * hexeditor)
 			FALSE, TRUE, 0);
 	hexeditor->pl_box = gtk_vbox_new(FALSE, 4);
 	gtk_box_pack_start(GTK_BOX(hexeditor->pl_view), hexeditor->pl_box, TRUE,
-			FALSE, 0);
+			TRUE, 0);
 	hexeditor->pl_helper.hexeditor = hexeditor;
 	hexeditor->pl_helper.error = _hexeditor_error;
 	/* load the plug-ins */
