@@ -195,7 +195,6 @@ static void _hexeditorwindow_on_close(gpointer data)
 	HexEditorWindow * hexeditor = data;
 
 	gtk_widget_hide(hexeditor->window);
-	hexeditor_close(hexeditor->hexeditor);
 	gtk_main_quit();
 }
 
