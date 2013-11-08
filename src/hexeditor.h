@@ -21,14 +21,22 @@
 # include "HexEditor.h"
 
 
+/* HexEditor */
 /* protected */
+/* types */
+typedef struct _HexEditorPrefs
+{
+	int uppercase;
+} HexEditorPrefs;
+
+
 /* constants */
 # define HEXEDITOR_CONFIG_FILE ".hexeditor"
 
 
 /* functions */
 HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
-		char const * device);
+		HexEditorPrefs * prefs, char const * device);
 void hexeditor_delete(HexEditor * hexeditor);
 
 /* accessors */

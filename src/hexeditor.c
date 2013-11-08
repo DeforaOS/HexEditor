@@ -60,6 +60,9 @@ struct _HexEditor
 	gsize size;
 	time_t time;
 
+	/* preferences */
+	HexEditorPrefs prefs;
+
 	/* widgets */
 	GtkWidget * widget;
 	GtkWidget * window;
@@ -146,7 +149,7 @@ static void _new_plugins(HexEditor * hexeditor);
 static void _new_progress(HexEditor * hexeditor);
 
 HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
-		char const * filename)
+		HexEditorPrefs * prefs, char const * filename)
 {
 	HexEditor * hexeditor;
 	GtkWidget * vbox;
@@ -158,6 +161,8 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 
 	if((hexeditor = object_new(sizeof(*hexeditor))) == NULL)
 		return NULL;
+	/* default preferences */
+	hexeditor->prefs.uppercase = 0;
 	if((hexeditor->config = config_new()) == NULL
 			|| _hexeditor_config_load(hexeditor) != 0)
 		_hexeditor_error(NULL, _("Error while loading configuration"),
@@ -168,6 +173,8 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	hexeditor->offset = 0;
 	hexeditor->size = 0;
 	hexeditor->time = 0;
+	if(prefs != NULL)
+		hexeditor->prefs = *prefs;
 	hexeditor->bold = pango_font_description_new();
 	pango_font_description_set_weight(hexeditor->bold, PANGO_WEIGHT_BOLD);
 	hexeditor->window = window;
@@ -670,13 +677,15 @@ static void _open_read_1(HexEditor * hexeditor, char * buf, gsize pos)
 	if(((hexeditor->offset + pos) % 16) == 0)
 	{
 		/* address */
-		snprintf(buf2, sizeof(buf2), "%s%08x",
+		snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
+				? "%s%08X" : "%s%08x",
 				(hexeditor->offset + pos) ? "\n" : "",
 				(unsigned int)(hexeditor->offset + pos));
 		gtk_text_buffer_get_end_iter(taddr, &iter);
 		gtk_text_buffer_insert(taddr, &iter, buf2, -1);
 		/* hexadecimal value */
-		snprintf(buf2, sizeof(buf2), "%s%02x",
+		snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
+				? "%s%02X" : "%s%02x",
 				(hexeditor->offset + pos) ? "\n" : "", c);
 		gtk_text_buffer_get_end_iter(thex, &iter);
 		gtk_text_buffer_insert(thex, &iter, buf2, -1);
@@ -690,7 +699,8 @@ static void _open_read_1(HexEditor * hexeditor, char * buf, gsize pos)
 	else
 	{
 		/* hexadecimal value */
-		snprintf(buf2, sizeof(buf2), " %02x", c);
+		snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
+				? " %02X" : " %02x", c);
 		gtk_text_buffer_get_end_iter(thex, &iter);
 		gtk_text_buffer_insert(thex, &iter, buf2, -1);
 	}
@@ -715,7 +725,8 @@ static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos)
 	tdata = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_data));
 	/* address */
 	gtk_text_buffer_get_end_iter(taddr, &iter);
-	snprintf(buf2, sizeof(buf2), "%s%08x",
+	snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
+			? "%s%08X" : "%s%08x",
 			(hexeditor->offset + pos) ? "\n" : "",
 			(unsigned int)(hexeditor->offset + pos));
 	gtk_text_buffer_insert(taddr, &iter, buf2, -1);
@@ -723,7 +734,10 @@ static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos)
 	for(i = 0; i < 16; i++)
 		c[i] = (unsigned char)buf[pos + i];
 	gtk_text_buffer_get_end_iter(thex, &iter);
-	snprintf(buf2, sizeof(buf2), "%s%02x %02x %02x %02x %02x %02x %02x %02x"
+	snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
+			? "%s%02X %02X %02X %02X %02X %02X %02X %02X"
+			" %02X %02X %02X %02X %02X %02X %02X %02X"
+			: "%s%02x %02x %02x %02x %02x %02x %02x %02x"
 			" %02x %02x %02x %02x %02x %02x %02x %02x",
 			(hexeditor->offset + pos) ? "\n" : "",
 			c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7],
@@ -891,6 +905,7 @@ static int _hexeditor_config_load(HexEditor * hexeditor)
 {
 	int ret;
 	String * filename;
+	String const * p;
 
 	if(hexeditor->config == NULL)
 		return -1; /* XXX report error */
@@ -900,6 +915,10 @@ static int _hexeditor_config_load(HexEditor * hexeditor)
 	if((ret = config_load(hexeditor->config, filename)) != 0)
 		ret = -_hexeditor_error(NULL, error_get(), 1);
 	free(filename);
+	/* uppercase */
+	if((p = config_get(hexeditor->config, NULL, "uppercase")) != NULL)
+		hexeditor->prefs.uppercase = (strtol(p, NULL, 10) > 0) ? 1 : 0;
+	/* FIXME also import the font and plug-in values from here */
 	return ret;
 }
 

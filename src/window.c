@@ -145,7 +145,7 @@ HexEditorWindow * hexeditorwindow_new(char const * filename)
 	{
 		gtk_widget_realize(hexeditor->window);
 		hexeditor->hexeditor = hexeditor_new(hexeditor->window, group,
-				filename);
+				NULL, filename);
 	}
 	if(hexeditor->hexeditor == NULL)
 	{
@@ -195,6 +195,7 @@ static void _hexeditorwindow_on_close(gpointer data)
 	HexEditorWindow * hexeditor = data;
 
 	gtk_widget_hide(hexeditor->window);
+	hexeditor_close(hexeditor->hexeditor);
 	gtk_main_quit();
 }
 
