@@ -53,6 +53,7 @@ struct _HexEditor
 {
 	Config * config;
 
+	char * filename;
 	int fd;
 	GIOChannel * channel;
 	guint source;
@@ -168,6 +169,7 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 			|| _hexeditor_config_load(hexeditor) != 0)
 		_hexeditor_error(NULL, _("Error while loading configuration"),
 				1);
+	hexeditor->filename = NULL;
 	hexeditor->fd = -1;
 	hexeditor->channel = NULL;
 	hexeditor->source = 0;
@@ -499,8 +501,14 @@ int hexeditor_open(HexEditor * hexeditor, char const * filename)
 	if(filename == NULL)
 		return hexeditor_open_dialog(hexeditor);
 	hexeditor_close(hexeditor);
-	if((hexeditor->fd = open(filename, O_RDONLY)) < 0)
+	if((hexeditor->filename = strdup(filename)) == NULL)
 		return -_hexeditor_error(hexeditor, strerror(errno), 1);
+	if((hexeditor->fd = open(filename, O_RDONLY)) < 0)
+	{
+		free(hexeditor->filename);
+		hexeditor->filename = NULL;
+		return -_hexeditor_error(hexeditor, strerror(errno), 1);
+	}
 	p = g_filename_display_name(filename);
 	snprintf(buf, sizeof(buf), "%s - %s", _("Hexadecimal editor"), p);
 	g_free(p);
@@ -901,6 +909,8 @@ static void _hexeditor_close(HexEditor * hexeditor, gboolean plugins)
 	if(hexeditor->fd >= 0 && close(hexeditor->fd) != 0)
 		_hexeditor_error(hexeditor, strerror(errno), 1);
 	hexeditor->fd = -1;
+	free(hexeditor->filename);
+	hexeditor->filename = NULL;
 	gtk_widget_hide(hexeditor->pg_window);
 	gtk_widget_set_sensitive(hexeditor->view_addr, FALSE);
 	gtk_widget_set_sensitive(hexeditor->view_hex, FALSE);
