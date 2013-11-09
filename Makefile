@@ -36,6 +36,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/include/HexEditor/project.conf \
 		$(PACKAGE)-$(VERSION)/po/Makefile \
 		$(PACKAGE)-$(VERSION)/po/POTFILES \
+		$(PACKAGE)-$(VERSION)/po/fr.po \
 		$(PACKAGE)-$(VERSION)/po/project.conf \
 		$(PACKAGE)-$(VERSION)/src/hexeditor.c \
 		$(PACKAGE)-$(VERSION)/src/window.c \

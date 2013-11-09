@@ -1,13 +1,31 @@
+TARGETS	= HexEditor.pot fr.mo
+PREFIX	= /usr/local
+DESTDIR	=
+RM	= rm -f
+LN	= ln -f
+MKDIR	= mkdir -m 0755 -p
+INSTALL	= install
 
 
-all:
+all: $(TARGETS)
+
+HexEditor.pot: POTFILES
+	./gettext.sh -P "$(PREFIX)" -- "HexEditor.pot"
+
+fr.mo: HexEditor.pot fr.po
+	./gettext.sh -P "$(PREFIX)" -- "fr.mo"
 
 clean:
+	$(RM) -- $(HexEditor.pot_OBJS) $(fr.mo_OBJS)
+	./gettext.sh -c -P "$(PREFIX)" -- "fr.mo"
 
 distclean: clean
+	$(RM) -- $(TARGETS)
 
-install:
+install: $(TARGETS)
+	./gettext.sh -P "$(DESTDIR)$(PREFIX)" -i -- "fr.mo"
 
 uninstall:
+	./gettext.sh -P "$(DESTDIR)$(PREFIX)" -u -- "fr.mo"
 
 .PHONY: all clean distclean install uninstall
