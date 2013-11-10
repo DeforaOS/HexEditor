@@ -535,19 +535,19 @@ static gboolean _open_on_can_read(GIOChannel * channel, GIOCondition condition,
 	HexEditor * hexeditor = data;
 	GIOStatus status;
 	char buf[BUFSIZ];
-	gsize size;
+	gsize size = sizeof(buf);
 	GError * error = NULL;
 	gsize i;
 
 	if(channel != hexeditor->channel || condition != G_IO_IN)
 		return FALSE;
-	status = g_io_channel_read_chars(channel, buf, sizeof(buf), &size,
-			&error);
+	status = g_io_channel_read_chars(channel, buf, size, &size, &error);
 	if(status == G_IO_STATUS_AGAIN)
 		/* this status can be ignored */
 		return TRUE;
 	if(status != G_IO_STATUS_NORMAL && status != G_IO_STATUS_EOF)
 	{
+		hexeditor->source = 0;
 		hexeditor_close(hexeditor);
 		if(status == G_IO_STATUS_ERROR)
 		{
@@ -620,6 +620,7 @@ static void _open_progress(HexEditor * hexeditor)
 	time_t t;
 	gdouble fraction;
 	char buf[16];
+	GtkProgressBar * progress = GTK_PROGRESS_BAR(hexeditor->pg_progress);
 
 	/* pulse the progress bar once per second */
 	if((t = time(NULL)) <= hexeditor->time)
@@ -627,18 +628,14 @@ static void _open_progress(HexEditor * hexeditor)
 	hexeditor->time = t;
 	if(hexeditor->size == 0)
 	{
-		gtk_progress_bar_pulse(GTK_PROGRESS_BAR(
-					hexeditor->pg_progress));
+		gtk_progress_bar_pulse(progress);
 		return;
 	}
 	fraction = hexeditor->offset;
 	fraction = fraction / hexeditor->size;
-	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(
-				hexeditor->pg_progress),
-			fraction);
+	gtk_progress_bar_set_fraction(progress, fraction);
 	snprintf(buf, sizeof(buf), "%.1lf%%", fraction * 100);
-	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(
-				hexeditor->pg_progress), buf);
+	gtk_progress_bar_set_text(progress, buf);
 }
 
 static void _open_read_1(HexEditor * hexeditor, char * buf, gsize pos)
