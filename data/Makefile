@@ -13,9 +13,9 @@ distclean: clean
 
 install:
 	$(MKDIR) $(DESTDIR)$(PREFIX)/share/applications
-	$(INSTALL) -m 0644 hexeditor.desktop $(DESTDIR)$(PREFIX)/share/applications/hexeditor.desktop
+	$(INSTALL) -m 0644 deforaos-hexeditor.desktop $(DESTDIR)$(PREFIX)/share/applications/deforaos-hexeditor.desktop
 
 uninstall:
-	$(RM) -- $(DESTDIR)$(PREFIX)/share/applications/hexeditor.desktop
+	$(RM) -- $(DESTDIR)$(PREFIX)/share/applications/deforaos-hexeditor.desktop
 
 .PHONY: all clean distclean install uninstall
