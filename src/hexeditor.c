@@ -38,6 +38,9 @@ static char const _license[] =
 #define N_(string) (string)
 
 /* constants */
+#ifndef PROGNAME
+# define PROGNAME	"hexeditor"
+#endif
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
 #endif
@@ -1005,7 +1008,7 @@ static int _hexeditor_error(HexEditor * hexeditor, char const * message,
 
 static int _error_text(char const * message, int ret)
 {
-	fprintf(stderr, "%s: %s\n", PACKAGE, message);
+	fprintf(stderr, "%s: %s\n", PROGNAME, message);
 	return ret;
 }
 
