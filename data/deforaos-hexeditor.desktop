@@ -2,7 +2,7 @@
 Name=Hexadecimal editor
 Comment=An hexadecimal editor
 TryExec=hexeditor
-Exec=hexeditor
+Exec=hexeditor %f
 Icon=text-editor
 Type=Application
 Categories=Development;GTK;
