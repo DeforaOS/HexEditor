@@ -27,6 +27,9 @@
 
 
 /* constants */
+#ifndef PROGNAME
+# define PROGNAME	"hexeditor"
+#endif
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
 #endif
@@ -63,7 +66,7 @@ static int _hexeditor(char const * filename)
 /* error */
 static int _error(char const * message, int ret)
 {
-	fputs("hexeditor: ", stderr);
+	fputs(PROGNAME ": ", stderr);
 	perror(message);
 	return ret;
 }
@@ -72,7 +75,7 @@ static int _error(char const * message, int ret)
 /* usage */
 static int _usage(void)
 {
-	fputs(_("Usage: hexeditor [filename]\n"), stderr);
+	fprintf(stderr, _("Usage: %s [filename]\n"), PROGNAME);
 	return 1;
 }
 
