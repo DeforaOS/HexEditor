@@ -42,6 +42,7 @@
 /* prototypes */
 static int _hexeditor(char const * filename);
 
+static int _error(char const * message, int ret);
 static int _usage(void);
 
 
@@ -56,6 +57,15 @@ static int _hexeditor(char const * filename)
 	gtk_main();
 	hexeditorwindow_delete(hexeditor);
 	return 0;
+}
+
+
+/* error */
+static int _error(char const * message, int ret)
+{
+	fputs("hexeditor: ", stderr);
+	perror(message);
+	return ret;
 }
 
 
@@ -75,7 +85,8 @@ int main(int argc, char * argv[])
 	int o;
 	char const * filename = NULL;
 
-	setlocale(LC_ALL, "");
+	if(setlocale(LC_ALL, "") == NULL)
+		_error("setlocale", 1);
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 	gtk_init(&argc, &argv);
