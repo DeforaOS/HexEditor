@@ -439,7 +439,7 @@ int hexeditor_load(HexEditor * hexeditor, char const * plugin)
 #endif
 	if(_hexeditor_plugin_is_enabled(hexeditor, plugin))
 		return 0;
-	if((p = plugin_new(LIBDIR, PACKAGE, "plug-ins", plugin)) == NULL)
+	if((p = plugin_new(LIBDIR, PACKAGE, "plugins", plugin)) == NULL)
 		return -_hexeditor_error(hexeditor, error_get(), 1);
 	if((hepd = plugin_lookup(p, "plugin")) == NULL)
 	{
