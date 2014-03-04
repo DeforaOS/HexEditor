@@ -1,6 +1,6 @@
 /* $Id$ */
 static char const _copyright[] =
-"Copyright © 2013 Pierre Pronchery <khorben@defora.org>";
+"Copyright © 2013-2014 Pierre Pronchery <khorben@defora.org>";
 /* This file is part of DeforaOS Desktop HexEditor */
 static char const _license[] =
 "This program is free software: you can redistribute it and/or modify\n"
@@ -232,7 +232,7 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	/* view: hexadecimal */
 	widget = gtk_scrolled_window_new(NULL, adjustment);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
-			GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	hexeditor->view_hex = gtk_text_view_new();
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(hexeditor->view_hex),
 			FALSE);
