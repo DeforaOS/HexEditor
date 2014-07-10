@@ -26,7 +26,9 @@ dist:
 		$(PACKAGE)-$(VERSION)/data/project.conf \
 		$(PACKAGE)-$(VERSION)/doc/Makefile \
 		$(PACKAGE)-$(VERSION)/doc/docbook.sh \
+		$(PACKAGE)-$(VERSION)/doc/hexeditor.css.xml \
 		$(PACKAGE)-$(VERSION)/doc/hexeditor.xml \
+		$(PACKAGE)-$(VERSION)/doc/manual.css.xml \
 		$(PACKAGE)-$(VERSION)/doc/project.conf \
 		$(PACKAGE)-$(VERSION)/include/HexEditor.h \
 		$(PACKAGE)-$(VERSION)/include/Makefile \

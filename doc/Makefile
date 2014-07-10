@@ -12,7 +12,7 @@ all: $(TARGETS)
 hexeditor.1: hexeditor.xml
 	./docbook.sh -P "$(PREFIX)" -- "hexeditor.1"
 
-hexeditor.html: hexeditor.xml
+hexeditor.html: hexeditor.css.xml hexeditor.xml manual.css.xml
 	./docbook.sh -P "$(PREFIX)" -- "hexeditor.html"
 
 clean:
