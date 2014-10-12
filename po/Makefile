@@ -17,6 +17,7 @@ fr.mo: HexEditor.pot fr.po
 
 clean:
 	$(RM) -- $(HexEditor.pot_OBJS) $(fr.mo_OBJS)
+	./gettext.sh -c -P "$(PREFIX)" -- "HexEditor.pot"
 	./gettext.sh -c -P "$(PREFIX)" -- "fr.mo"
 
 distclean: clean

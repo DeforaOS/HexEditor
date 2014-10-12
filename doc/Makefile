@@ -17,6 +17,7 @@ hexeditor.html: hexeditor.css.xml hexeditor.xml manual.css.xml
 
 clean:
 	$(RM) -- $(hexeditor.1_OBJS) $(hexeditor.html_OBJS)
+	./docbook.sh -c -P "$(PREFIX)" -- "hexeditor.1"
 	./docbook.sh -c -P "$(PREFIX)" -- "hexeditor.html"
 
 distclean: clean
