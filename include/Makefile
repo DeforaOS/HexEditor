@@ -1,4 +1,5 @@
 SUBDIRS	= HexEditor
+OBJDIR	=
 PREFIX	= /usr/local
 DESTDIR	=
 RM	= rm -f

@@ -1,4 +1,5 @@
-TARGETS	= template.so
+TARGETS	= $(OBJDIR)template.so
+OBJDIR	=
 PREFIX	= /usr/local
 DESTDIR	=
 LIBDIR	= $(PREFIX)/lib
@@ -19,15 +20,15 @@ INSTALL	= install
 
 all: $(TARGETS)
 
-template_OBJS = template.o
+template_OBJS = $(OBJDIR)template.o
 template_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 template_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 
-template.so: $(template_OBJS)
-	$(CCSHARED) -o template.so $(template_OBJS) $(template_LDFLAGS)
+$(OBJDIR)template.so: $(template_OBJS)
+	$(CCSHARED) -o $(OBJDIR)template.so $(template_OBJS) $(template_LDFLAGS)
 
-template.o: template.c
-	$(CC) $(template_CFLAGS) -c template.c
+$(OBJDIR)template.o: template.c
+	$(CC) $(template_CFLAGS) -o $(OBJDIR)template.o -c template.c
 
 clean:
 	$(RM) -- $(template_OBJS)

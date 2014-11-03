@@ -1,5 +1,6 @@
 SUBDIRS	= plugins
-TARGETS	= hexeditor
+TARGETS	= $(OBJDIR)hexeditor
+OBJDIR	=
 PREFIX	= /usr/local
 DESTDIR	=
 BINDIR	= $(PREFIX)/bin
@@ -21,21 +22,21 @@ all: subdirs $(TARGETS)
 subdirs:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE)) || exit; done
 
-hexeditor_OBJS = hexeditor.o window.o main.o
+hexeditor_OBJS = $(OBJDIR)hexeditor.o $(OBJDIR)window.o $(OBJDIR)main.o
 hexeditor_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 hexeditor_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 
-hexeditor: $(hexeditor_OBJS)
-	$(CC) -o hexeditor $(hexeditor_OBJS) $(hexeditor_LDFLAGS)
+$(OBJDIR)hexeditor: $(hexeditor_OBJS)
+	$(CC) -o $(OBJDIR)hexeditor $(hexeditor_OBJS) $(hexeditor_LDFLAGS)
 
-hexeditor.o: hexeditor.c hexeditor.h ../config.h
-	$(CC) $(hexeditor_CFLAGS) -c hexeditor.c
+$(OBJDIR)hexeditor.o: hexeditor.c hexeditor.h ../config.h
+	$(CC) $(hexeditor_CFLAGS) -o $(OBJDIR)hexeditor.o -c hexeditor.c
 
-window.o: window.c hexeditor.h window.h
-	$(CC) $(hexeditor_CFLAGS) -c window.c
+$(OBJDIR)window.o: window.c hexeditor.h window.h
+	$(CC) $(hexeditor_CFLAGS) -o $(OBJDIR)window.o -c window.c
 
-main.o: main.c window.h
-	$(CC) $(hexeditor_CFLAGS) -c main.c
+$(OBJDIR)main.o: main.c window.h
+	$(CC) $(hexeditor_CFLAGS) -o $(OBJDIR)main.o -c main.c
 
 clean:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) clean) || exit; done
@@ -49,7 +50,7 @@ distclean:
 install: $(TARGETS)
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) install) || exit; done
 	$(MKDIR) $(DESTDIR)$(BINDIR)
-	$(INSTALL) -m 0755 hexeditor $(DESTDIR)$(BINDIR)/hexeditor
+	$(INSTALL) -m 0755 $(OBJDIR)hexeditor $(DESTDIR)$(BINDIR)/hexeditor
 
 uninstall:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) uninstall) || exit; done

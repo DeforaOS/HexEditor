@@ -1,4 +1,5 @@
-TARGETS	= hexeditor.1 hexeditor.html
+TARGETS	= $(OBJDIR)hexeditor.1 $(OBJDIR)hexeditor.html
+OBJDIR	=
 PREFIX	= /usr/local
 DESTDIR	=
 RM	= rm -f
@@ -9,11 +10,11 @@ INSTALL	= install
 
 all: $(TARGETS)
 
-hexeditor.1: hexeditor.xml
-	./docbook.sh -P "$(PREFIX)" -- "hexeditor.1"
+$(OBJDIR)hexeditor.1: hexeditor.xml
+	./docbook.sh -P "$(PREFIX)" -- "$(OBJDIR)hexeditor.1"
 
-hexeditor.html: hexeditor.css.xml hexeditor.xml manual.css.xml
-	./docbook.sh -P "$(PREFIX)" -- "hexeditor.html"
+$(OBJDIR)hexeditor.html: hexeditor.css.xml hexeditor.xml manual.css.xml
+	./docbook.sh -P "$(PREFIX)" -- "$(OBJDIR)hexeditor.html"
 
 clean:
 	$(RM) -- $(hexeditor.1_OBJS) $(hexeditor.html_OBJS)
@@ -24,8 +25,8 @@ distclean: clean
 	$(RM) -- $(TARGETS)
 
 install: $(TARGETS)
-	./docbook.sh -P "$(DESTDIR)$(PREFIX)" -i -- "hexeditor.1"
-	./docbook.sh -P "$(DESTDIR)$(PREFIX)" -i -- "hexeditor.html"
+	./docbook.sh -P "$(DESTDIR)$(PREFIX)" -i -- "$(OBJDIR)hexeditor.1"
+	./docbook.sh -P "$(DESTDIR)$(PREFIX)" -i -- "$(OBJDIR)hexeditor.html"
 
 uninstall:
 	./docbook.sh -P "$(DESTDIR)$(PREFIX)" -u -- "hexeditor.1"
