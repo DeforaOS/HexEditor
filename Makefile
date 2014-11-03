@@ -39,12 +39,14 @@ dist:
 		$(PACKAGE)-$(VERSION)/po/Makefile \
 		$(PACKAGE)-$(VERSION)/po/POTFILES \
 		$(PACKAGE)-$(VERSION)/po/fr.po \
+		$(PACKAGE)-$(VERSION)/po/gettext.sh \
 		$(PACKAGE)-$(VERSION)/po/project.conf \
 		$(PACKAGE)-$(VERSION)/src/hexeditor.c \
 		$(PACKAGE)-$(VERSION)/src/window.c \
 		$(PACKAGE)-$(VERSION)/src/main.c \
 		$(PACKAGE)-$(VERSION)/src/Makefile \
 		$(PACKAGE)-$(VERSION)/src/hexeditor.h \
+		$(PACKAGE)-$(VERSION)/src/window.h \
 		$(PACKAGE)-$(VERSION)/src/project.conf \
 		$(PACKAGE)-$(VERSION)/src/plugins/template.c \
 		$(PACKAGE)-$(VERSION)/src/plugins/Makefile \
