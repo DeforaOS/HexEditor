@@ -735,12 +735,9 @@ static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos)
 			c[8], c[9], c[10], c[11], c[12], c[13], c[14], c[15]);
 	gtk_text_buffer_insert(thex, &iter, buf2, i);
 	/* character values */
-	if(hexeditor->offset + pos != 0)
-	{
-		gtk_text_buffer_get_end_iter(tdata, &iter);
-		gtk_text_buffer_insert(tdata, &iter, "\n", 1);
-	}
 	gtk_text_buffer_get_end_iter(tdata, &iter);
+	if(hexeditor->offset + pos != 0)
+		gtk_text_buffer_insert(tdata, &iter, "\n", 1);
 	for(i = 0; i < 16; i++)
 		if(!isascii(c[i]) || !isprint(c[i]))
 			c[i] = '.';
