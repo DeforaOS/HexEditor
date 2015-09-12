@@ -76,8 +76,11 @@ struct _HexEditor
 	GtkWidget * infobar_label;
 #endif
 	GtkWidget * view_addr;
+	GtkTextBuffer * view_addr_tbuf;
 	GtkWidget * view_hex;
+	GtkTextBuffer * view_hex_tbuf;
 	GtkWidget * view_data;
+	GtkTextBuffer * view_data_tbuf;
 	/* progress */
 	GtkWidget * pg_window;
 	GtkWidget * pg_progress;
@@ -224,6 +227,8 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(
 				widget));
 	hexeditor->view_addr = gtk_text_view_new();
+	hexeditor->view_addr_tbuf = gtk_text_view_get_buffer(
+			GTK_TEXT_VIEW(hexeditor->view_addr));
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(hexeditor->view_addr),
 			FALSE);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(hexeditor->view_addr), FALSE);
@@ -234,6 +239,8 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
 			GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	hexeditor->view_hex = gtk_text_view_new();
+	hexeditor->view_hex_tbuf = gtk_text_view_get_buffer(
+			GTK_TEXT_VIEW(hexeditor->view_hex));
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(hexeditor->view_hex),
 			FALSE);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(hexeditor->view_hex), FALSE);
@@ -244,6 +251,8 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
 			GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	hexeditor->view_data = gtk_text_view_new();
+	hexeditor->view_data_tbuf = gtk_text_view_get_buffer(
+			GTK_TEXT_VIEW(hexeditor->view_data));
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(hexeditor->view_data),
 			FALSE);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(hexeditor->view_data), FALSE);
@@ -650,9 +659,9 @@ static void _open_read_1(HexEditor * hexeditor, char * buf, gsize pos)
 	GtkTextIter iter;
 	int c;
 
-	taddr = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_addr));
-	thex = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_hex));
-	tdata = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_data));
+	taddr = hexeditor->view_addr_tbuf;
+	thex = hexeditor->view_hex_tbuf;
+	tdata = hexeditor->view_data_tbuf;
 	c = (unsigned char)buf[pos];
 	if(((hexeditor->offset + pos) % 16) == 0)
 	{
@@ -700,9 +709,9 @@ static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos)
 	int i;
 	char buf2[64];
 
-	taddr = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_addr));
-	thex = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_hex));
-	tdata = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_data));
+	taddr = hexeditor->view_addr_tbuf;
+	thex = hexeditor->view_hex_tbuf;
+	tdata = hexeditor->view_data_tbuf;
 	/* address */
 	gtk_text_buffer_get_end_iter(taddr, &iter);
 	snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
@@ -930,20 +939,15 @@ static void _close_reset(HexEditor * hexeditor);
 
 static void _hexeditor_close(HexEditor * hexeditor, gboolean plugins)
 {
-	GtkTextBuffer * tbuf;
-
 	if(hexeditor->source != 0)
 		g_source_remove(hexeditor->source);
 	hexeditor->source = 0;
 	hexeditor->offset = 0;
 	hexeditor->size = 0;
 	hexeditor->time = 0;
-	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_addr));
-	gtk_text_buffer_set_text(tbuf, "", 0);
-	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_hex));
-	gtk_text_buffer_set_text(tbuf, "", 0);
-	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hexeditor->view_data));
-	gtk_text_buffer_set_text(tbuf, "", 0);
+	gtk_text_buffer_set_text(hexeditor->view_addr_tbuf, "", 0);
+	gtk_text_buffer_set_text(hexeditor->view_hex_tbuf, "", 0);
+	gtk_text_buffer_set_text(hexeditor->view_data_tbuf, "", 0);
 	if(hexeditor->channel != NULL)
 	{
 		g_io_channel_shutdown(hexeditor->channel, TRUE, NULL);
