@@ -774,10 +774,19 @@ void hexeditor_show_preferences(HexEditor * hexeditor, gboolean show)
 
 
 /* hexeditor_show_properties */
+static GtkWidget * _properties_widget(HexEditor * hexeditor,
+		GtkSizeGroup * group, char const * label, GtkWidget * value);
+
 void hexeditor_show_properties(HexEditor * hexeditor, gboolean show)
 {
 	GtkWidget * dialog;
+	GtkSizeGroup * hgroup;
+	GtkSizeGroup * vgroup;
 	GtkWidget * vbox;
+	GtkWidget * widget;
+	gchar * p;
+	gchar * q;
+	GError * error = NULL;
 
 	if(show == FALSE)
 		/* XXX should really hide the window */
@@ -787,15 +796,51 @@ void hexeditor_show_properties(HexEditor * hexeditor, gboolean show)
 			GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
 			GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE, NULL);
 	gtk_window_set_default_size(GTK_WINDOW(dialog), 300, 200);
+	hgroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+	vgroup = gtk_size_group_new(GTK_SIZE_GROUP_VERTICAL);
 #if GTK_CHECK_VERSION(2, 14, 0)
 	vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 #else
 	vbox = dialog->vbox;
 #endif
-	/* FIXME really implement */
+	/* filename */
+	p = g_strdup((hexeditor->filename != NULL) ? hexeditor->filename : "");
+	if((q = g_filename_to_utf8(p, -1, NULL, NULL, &error)) == NULL)
+	{
+		_hexeditor_error(NULL, error->message, 1);
+		g_error_free(error);
+		q = p;
+	}
+	widget = gtk_entry_new();
+	gtk_editable_set_editable(GTK_EDITABLE(widget), FALSE);
+	gtk_entry_set_text(GTK_ENTRY(widget), q);
+	gtk_size_group_add_widget(vgroup, widget);
+	g_free(p);
+	widget = _properties_widget(hexeditor, hgroup, _("Filename:"), widget);
+	gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, FALSE, 0);
 	gtk_widget_show_all(vbox);
 	gtk_dialog_run(GTK_DIALOG(dialog));
 	gtk_widget_destroy(dialog);
+}
+
+static GtkWidget * _properties_widget(HexEditor * hexeditor,
+		GtkSizeGroup * group, char const * label, GtkWidget * value)
+{
+	GtkWidget * hbox;
+	GtkWidget * widget;
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+#else
+	hbox = gtk_hbox_new(FALSE, 4);
+#endif
+	widget = gtk_label_new(label);
+	gtk_widget_modify_font(widget, hexeditor->bold);
+	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
+	gtk_size_group_add_widget(group, widget);
+	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), value, TRUE, TRUE, 0);
+	return hbox;
 }
 
 
