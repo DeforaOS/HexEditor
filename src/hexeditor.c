@@ -658,6 +658,7 @@ static void _open_read_1(HexEditor * hexeditor, char * buf, gsize pos)
 	GtkTextBuffer * tdata;
 	GtkTextIter iter;
 	int c;
+	int size;
 
 	taddr = hexeditor->view_addr_tbuf;
 	thex = hexeditor->view_hex_tbuf;
@@ -666,18 +667,18 @@ static void _open_read_1(HexEditor * hexeditor, char * buf, gsize pos)
 	if(((hexeditor->offset + pos) % 16) == 0)
 	{
 		/* address */
-		snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
+		size = snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
 				? "%s%08X" : "%s%08x",
 				(hexeditor->offset + pos) ? "\n" : "",
 				(unsigned int)(hexeditor->offset + pos));
 		gtk_text_buffer_get_end_iter(taddr, &iter);
-		gtk_text_buffer_insert(taddr, &iter, buf2, -1);
+		gtk_text_buffer_insert(taddr, &iter, buf2, size);
 		/* hexadecimal value */
-		snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
+		size = snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
 				? "%s%02X" : "%s%02x",
 				(hexeditor->offset + pos) ? "\n" : "", c);
 		gtk_text_buffer_get_end_iter(thex, &iter);
-		gtk_text_buffer_insert(thex, &iter, buf2, -1);
+		gtk_text_buffer_insert(thex, &iter, buf2, size);
 		if(hexeditor->offset + pos != 0)
 		{
 			/* character value */
@@ -688,15 +689,16 @@ static void _open_read_1(HexEditor * hexeditor, char * buf, gsize pos)
 	else
 	{
 		/* hexadecimal value */
-		snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
+		size = snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
 				? " %02X" : " %02x", c);
 		gtk_text_buffer_get_end_iter(thex, &iter);
-		gtk_text_buffer_insert(thex, &iter, buf2, -1);
+		gtk_text_buffer_insert(thex, &iter, buf2, size);
 	}
 	/* character value */
-	snprintf(buf2, sizeof(buf2), "%c", isascii(c) && isprint(c) ? c : '.');
+	size = snprintf(buf2, sizeof(buf2), "%c", (isascii(c) && isprint(c))
+			? c : '.');
 	gtk_text_buffer_get_end_iter(tdata, &iter);
-	gtk_text_buffer_insert(tdata, &iter, buf2, -1);
+	gtk_text_buffer_insert(tdata, &iter, buf2, size);
 }
 
 static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos)
@@ -714,11 +716,11 @@ static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos)
 	tdata = hexeditor->view_data_tbuf;
 	/* address */
 	gtk_text_buffer_get_end_iter(taddr, &iter);
-	snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
+	i = snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
 			? "%s%08X" : "%s%08x",
 			(hexeditor->offset + pos) ? "\n" : "",
 			(unsigned int)(hexeditor->offset + pos));
-	gtk_text_buffer_insert(taddr, &iter, buf2, -1);
+	gtk_text_buffer_insert(taddr, &hexeditor->view_addr_iter, buf2, i);
 	/* hexadecimal values */
 	for(i = 0; i < 16; i++)
 		c[i] = (unsigned char)buf[pos + i];
