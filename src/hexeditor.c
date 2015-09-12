@@ -714,7 +714,7 @@ static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos)
 	for(i = 0; i < 16; i++)
 		c[i] = (unsigned char)buf[pos + i];
 	gtk_text_buffer_get_end_iter(thex, &iter);
-	snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
+	i = snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
 			? "%s%02X %02X %02X %02X %02X %02X %02X %02X"
 			" %02X %02X %02X %02X %02X %02X %02X %02X"
 			: "%s%02x %02x %02x %02x %02x %02x %02x %02x"
@@ -722,7 +722,7 @@ static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos)
 			(hexeditor->offset + pos) ? "\n" : "",
 			c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7],
 			c[8], c[9], c[10], c[11], c[12], c[13], c[14], c[15]);
-	gtk_text_buffer_insert(thex, &iter, buf2, -1);
+	gtk_text_buffer_insert(thex, &iter, buf2, i);
 	/* character values */
 	if(hexeditor->offset + pos != 0)
 	{
