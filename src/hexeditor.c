@@ -77,10 +77,13 @@ struct _HexEditor
 #endif
 	GtkWidget * view_addr;
 	GtkTextBuffer * view_addr_tbuf;
+	GtkTextIter view_addr_iter;
 	GtkWidget * view_hex;
 	GtkTextBuffer * view_hex_tbuf;
+	GtkTextIter view_hex_iter;
 	GtkWidget * view_data;
 	GtkTextBuffer * view_data_tbuf;
+	GtkTextIter view_data_iter;
 	/* progress */
 	GtkWidget * pg_window;
 	GtkWidget * pg_progress;
@@ -229,6 +232,8 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	hexeditor->view_addr = gtk_text_view_new();
 	hexeditor->view_addr_tbuf = gtk_text_view_get_buffer(
 			GTK_TEXT_VIEW(hexeditor->view_addr));
+	gtk_text_buffer_get_end_iter(hexeditor->view_addr_tbuf,
+			&hexeditor->view_addr_iter);
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(hexeditor->view_addr),
 			FALSE);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(hexeditor->view_addr), FALSE);
@@ -241,6 +246,8 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	hexeditor->view_hex = gtk_text_view_new();
 	hexeditor->view_hex_tbuf = gtk_text_view_get_buffer(
 			GTK_TEXT_VIEW(hexeditor->view_hex));
+	gtk_text_buffer_get_end_iter(hexeditor->view_hex_tbuf,
+			&hexeditor->view_hex_iter);
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(hexeditor->view_hex),
 			FALSE);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(hexeditor->view_hex), FALSE);
@@ -253,6 +260,8 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	hexeditor->view_data = gtk_text_view_new();
 	hexeditor->view_data_tbuf = gtk_text_view_get_buffer(
 			GTK_TEXT_VIEW(hexeditor->view_data));
+	gtk_text_buffer_get_end_iter(hexeditor->view_data_tbuf,
+			&hexeditor->view_data_iter);
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(hexeditor->view_data),
 			FALSE);
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(hexeditor->view_data), FALSE);
@@ -656,7 +665,6 @@ static void _open_read_1(HexEditor * hexeditor, char * buf, gsize pos)
 	GtkTextBuffer * taddr;
 	GtkTextBuffer * thex;
 	GtkTextBuffer * tdata;
-	GtkTextIter iter;
 	int c;
 	int size;
 
@@ -671,34 +679,31 @@ static void _open_read_1(HexEditor * hexeditor, char * buf, gsize pos)
 				? "%s%08X" : "%s%08x",
 				(hexeditor->offset + pos) ? "\n" : "",
 				(unsigned int)(hexeditor->offset + pos));
-		gtk_text_buffer_get_end_iter(taddr, &iter);
-		gtk_text_buffer_insert(taddr, &iter, buf2, size);
+		gtk_text_buffer_insert(taddr, &hexeditor->view_addr_iter,
+				buf2, size);
 		/* hexadecimal value */
 		size = snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
 				? "%s%02X" : "%s%02x",
 				(hexeditor->offset + pos) ? "\n" : "", c);
-		gtk_text_buffer_get_end_iter(thex, &iter);
-		gtk_text_buffer_insert(thex, &iter, buf2, size);
+		gtk_text_buffer_insert(thex, &hexeditor->view_hex_iter,
+				buf2, size);
 		if(hexeditor->offset + pos != 0)
-		{
 			/* character value */
-			gtk_text_buffer_get_end_iter(tdata, &iter);
-			gtk_text_buffer_insert(tdata, &iter, "\n", 1);
-		}
+			gtk_text_buffer_insert(tdata,
+					&hexeditor->view_data_iter, "\n", 1);
 	}
 	else
 	{
 		/* hexadecimal value */
 		size = snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
 				? " %02X" : " %02x", c);
-		gtk_text_buffer_get_end_iter(thex, &iter);
-		gtk_text_buffer_insert(thex, &iter, buf2, size);
+		gtk_text_buffer_insert(thex, &hexeditor->view_hex_iter,
+				buf2, size);
 	}
 	/* character value */
 	size = snprintf(buf2, sizeof(buf2), "%c", (isascii(c) && isprint(c))
 			? c : '.');
-	gtk_text_buffer_get_end_iter(tdata, &iter);
-	gtk_text_buffer_insert(tdata, &iter, buf2, size);
+	gtk_text_buffer_insert(tdata, &hexeditor->view_data_iter, buf2, size);
 }
 
 static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos)
@@ -706,7 +711,6 @@ static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos)
 	GtkTextBuffer * taddr;
 	GtkTextBuffer * thex;
 	GtkTextBuffer * tdata;
-	GtkTextIter iter;
 	unsigned char c[16];
 	int i;
 	char buf2[64];
@@ -715,7 +719,6 @@ static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos)
 	thex = hexeditor->view_hex_tbuf;
 	tdata = hexeditor->view_data_tbuf;
 	/* address */
-	gtk_text_buffer_get_end_iter(taddr, &iter);
 	i = snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
 			? "%s%08X" : "%s%08x",
 			(hexeditor->offset + pos) ? "\n" : "",
@@ -724,7 +727,6 @@ static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos)
 	/* hexadecimal values */
 	for(i = 0; i < 16; i++)
 		c[i] = (unsigned char)buf[pos + i];
-	gtk_text_buffer_get_end_iter(thex, &iter);
 	i = snprintf(buf2, sizeof(buf2), hexeditor->prefs.uppercase
 			? "%s%02X %02X %02X %02X %02X %02X %02X %02X"
 			" %02X %02X %02X %02X %02X %02X %02X %02X"
@@ -733,15 +735,16 @@ static void _open_read_16(HexEditor * hexeditor, char * buf, gsize pos)
 			(hexeditor->offset + pos) ? "\n" : "",
 			c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7],
 			c[8], c[9], c[10], c[11], c[12], c[13], c[14], c[15]);
-	gtk_text_buffer_insert(thex, &iter, buf2, i);
+	gtk_text_buffer_insert(thex, &hexeditor->view_hex_iter, buf2, i);
 	/* character values */
-	gtk_text_buffer_get_end_iter(tdata, &iter);
 	if(hexeditor->offset + pos != 0)
-		gtk_text_buffer_insert(tdata, &iter, "\n", 1);
+		gtk_text_buffer_insert(tdata, &hexeditor->view_data_iter,
+				"\n", 1);
 	for(i = 0; i < 16; i++)
 		if(!isascii(c[i]) || !isprint(c[i]))
 			c[i] = '.';
-	gtk_text_buffer_insert(tdata, &iter, (char const *)c, 16);
+	gtk_text_buffer_insert(tdata, &hexeditor->view_data_iter,
+			(char const *)c, 16);
 }
 
 
@@ -945,8 +948,14 @@ static void _hexeditor_close(HexEditor * hexeditor, gboolean plugins)
 	hexeditor->size = 0;
 	hexeditor->time = 0;
 	gtk_text_buffer_set_text(hexeditor->view_addr_tbuf, "", 0);
+	gtk_text_buffer_get_end_iter(hexeditor->view_addr_tbuf,
+			&hexeditor->view_addr_iter);
 	gtk_text_buffer_set_text(hexeditor->view_hex_tbuf, "", 0);
+	gtk_text_buffer_get_end_iter(hexeditor->view_hex_tbuf,
+			&hexeditor->view_hex_iter);
 	gtk_text_buffer_set_text(hexeditor->view_data_tbuf, "", 0);
+	gtk_text_buffer_get_end_iter(hexeditor->view_data_tbuf,
+			&hexeditor->view_data_iter);
 	if(hexeditor->channel != NULL)
 	{
 		g_io_channel_shutdown(hexeditor->channel, TRUE, NULL);
