@@ -790,11 +790,14 @@ static GtkWidget * _properties_widget(HexEditor * hexeditor,
 
 void hexeditor_show_properties(HexEditor * hexeditor, gboolean show)
 {
+	const unsigned int flags = GTK_DIALOG_MODAL
+		| GTK_DIALOG_DESTROY_WITH_PARENT;
 	GtkWidget * dialog;
 	GtkSizeGroup * hgroup;
 	GtkSizeGroup * vgroup;
 	GtkWidget * vbox;
 	GtkWidget * widget;
+	String * s;
 	gchar * p;
 	gchar * q;
 	GError * error = NULL;
@@ -802,11 +805,29 @@ void hexeditor_show_properties(HexEditor * hexeditor, gboolean show)
 	if(show == FALSE)
 		/* XXX should really hide the window */
 		return;
-	dialog = gtk_dialog_new_with_buttons(_("Properties"),
-			GTK_WINDOW(hexeditor->window),
-			GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-			GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE, NULL);
-	gtk_window_set_default_size(GTK_WINDOW(dialog), 300, 200);
+	dialog = gtk_message_dialog_new(GTK_WINDOW(hexeditor->window), flags,
+			GTK_MESSAGE_INFO, GTK_BUTTONS_CLOSE,
+#if GTK_CHECK_VERSION(2, 6, 0)
+			"%s", _("Properties"));
+	gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog),
+#endif
+			"");
+#if GTK_CHECK_VERSION(2, 10, 0)
+	gtk_message_dialog_set_image(GTK_MESSAGE_DIALOG(dialog),
+			gtk_image_new_from_stock(GTK_STOCK_PROPERTIES,
+				GTK_ICON_SIZE_DIALOG));
+#endif
+	if(hexeditor->filename == NULL)
+		s = string_new(_("Properties"));
+	else
+	{
+		p = g_path_get_basename(hexeditor->filename);
+		s = string_new_format(_("Properties of %s"), p);
+		g_free(p);
+	}
+	if(s != NULL)
+		gtk_window_set_title(GTK_WINDOW(dialog), s);
+	string_delete(s);
 	hgroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	vgroup = gtk_size_group_new(GTK_SIZE_GROUP_VERTICAL);
 #if GTK_CHECK_VERSION(2, 14, 0)
@@ -815,6 +836,7 @@ void hexeditor_show_properties(HexEditor * hexeditor, gboolean show)
 	vbox = dialog->vbox;
 #endif
 	/* filename */
+	/* XXX the filename may be relative */
 	p = g_strdup((hexeditor->filename != NULL) ? hexeditor->filename : "");
 	if((q = g_filename_to_utf8(p, -1, NULL, NULL, &error)) == NULL)
 	{
@@ -829,6 +851,7 @@ void hexeditor_show_properties(HexEditor * hexeditor, gboolean show)
 	g_free(p);
 	widget = _properties_widget(hexeditor, hgroup, _("Filename:"), widget);
 	gtk_box_pack_start(GTK_BOX(vbox), widget, FALSE, FALSE, 0);
+	/* FIXME implement more properties */
 	gtk_widget_show_all(vbox);
 	gtk_dialog_run(GTK_DIALOG(dialog));
 	gtk_widget_destroy(dialog);
