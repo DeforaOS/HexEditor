@@ -82,37 +82,38 @@ static const DesktopAccel _hexeditorwindow_accel[] =
 /* menus */
 static const DesktopMenu _hexeditorwindow_menu_file[] =
 {
-	{ "_Open", G_CALLBACK(_hexeditorwindow_on_file_open), GTK_STOCK_OPEN,
-		GDK_CONTROL_MASK, GDK_KEY_O },
+	{ N_("_Open"), G_CALLBACK(_hexeditorwindow_on_file_open),
+		GTK_STOCK_OPEN, GDK_CONTROL_MASK, GDK_KEY_O },
 	{ "", NULL, NULL, 0, 0 },
-	{ "_Properties", G_CALLBACK(_hexeditorwindow_on_file_properties),
+	{ N_("_Properties"), G_CALLBACK(_hexeditorwindow_on_file_properties),
 		GTK_STOCK_PROPERTIES, GDK_MOD1_MASK, GDK_KEY_Return },
 	{ "", NULL, NULL, 0, 0 },
-	{ "_Close", G_CALLBACK(_hexeditorwindow_on_file_close), GTK_STOCK_CLOSE,
-		GDK_CONTROL_MASK, GDK_KEY_W },
+	{ N_("_Close"), G_CALLBACK(_hexeditorwindow_on_file_close),
+		GTK_STOCK_CLOSE, GDK_CONTROL_MASK, GDK_KEY_W },
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
 static const DesktopMenu _hexeditorwindow_menu_edit[] =
 {
-	{ "_Preferences", G_CALLBACK(_hexeditorwindow_on_edit_preferences),
+	{ N_("_Preferences"), G_CALLBACK(_hexeditorwindow_on_edit_preferences),
 		GTK_STOCK_PREFERENCES, GDK_CONTROL_MASK, GDK_KEY_P },
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
 static const DesktopMenu _hexeditorwindow_menu_help[] =
 {
-	{ "_Contents", G_CALLBACK(_hexeditorwindow_on_help_contents),
+	{ N_("_Contents"), G_CALLBACK(_hexeditorwindow_on_help_contents),
 		"help-contents", 0, GDK_KEY_F1 },
-	{ "_About", G_CALLBACK(_hexeditorwindow_on_help_about), GTK_STOCK_ABOUT, 0, 0 },
+	{ N_("_About"), G_CALLBACK(_hexeditorwindow_on_help_about),
+		GTK_STOCK_ABOUT, 0, 0 },
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
 static const DesktopMenubar _hexeditorwindow_menubar[] =
 {
-	{ "_File", _hexeditorwindow_menu_file },
-	{ "_Edit", _hexeditorwindow_menu_edit },
-	{ "_Help", _hexeditorwindow_menu_help },
+	{ N_("_File"), _hexeditorwindow_menu_file },
+	{ N_("_Edit"), _hexeditorwindow_menu_edit },
+	{ N_("_Help"), _hexeditorwindow_menu_help },
 	{ NULL, NULL }
 };
 #endif

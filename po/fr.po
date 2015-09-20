@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: HexEditor 0.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-09-21 01:44+0200\n"
+"POT-Creation-Date: 2015-09-21 01:47+0200\n"
 "PO-Revision-Date: 2013-11-09 02:39+0100\n"
 "Last-Translator: Pierre Pronchery <khorben@defora.org>\n"
 "Language-Team: French\n"
@@ -24,7 +24,7 @@ msgstr "Erreur lors du chargement de la configuration"
 msgid "Progress"
 msgstr "Progression"
 
-#: ../src/hexeditor.c:534 ../src/hexeditor.c:999
+#: ../src/hexeditor.c:534 ../src/hexeditor.c:999 ../src/window.c:141
 msgid "Hexadecimal editor"
 msgstr "Éditeur hexadécimal"
 
@@ -57,3 +57,43 @@ msgstr "Erreur"
 #, c-format
 msgid "Usage: %s [filename]\n"
 msgstr "Usage : %s [fichier]\n"
+
+#: ../src/window.c:85
+msgid "_Open"
+msgstr "_Ouvrir"
+
+#: ../src/window.c:88
+msgid "_Properties"
+msgstr "_Propriétés"
+
+#: ../src/window.c:91
+msgid "_Close"
+msgstr "_Fermer"
+
+#: ../src/window.c:98
+msgid "_Preferences"
+msgstr "_Préférences"
+
+#: ../src/window.c:105
+msgid "_Contents"
+msgstr "_Sommaire"
+
+#: ../src/window.c:107
+msgid "_About"
+msgstr "À _propos"
+
+#: ../src/window.c:114
+msgid "_File"
+msgstr "_Fichier"
+
+#: ../src/window.c:115
+msgid "_Edit"
+msgstr "É_dition"
+
+#: ../src/window.c:116
+msgid "_Help"
+msgstr "_Aide"
+
+#: ../src/window.c:263
+msgid "Hexadecimal editor for the DeforaOS desktop"
+msgstr "Éditeur hexadécimal pour l'environnement DeforaOS"
