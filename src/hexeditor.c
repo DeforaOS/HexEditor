@@ -140,13 +140,14 @@ static void _hexeditor_on_properties(gpointer data);
 /* variables */
 static DesktopToolbar _hexeditor_toolbar[] =
 {
-	{ "Open", G_CALLBACK(_hexeditor_on_open), GTK_STOCK_OPEN, 0, 0, NULL },
+	{ N_("Open"), G_CALLBACK(_hexeditor_on_open), GTK_STOCK_OPEN, 0, 0,
+		NULL },
 #ifdef EMBEDDED
 	{ "", NULL, NULL, 0, 0, NULL },
-	{ "Properties", G_CALLBACK(_hexeditor_on_properties),
+	{ N_("Properties"), G_CALLBACK(_hexeditor_on_properties),
 		GTK_STOCK_PROPERTIES, GDK_MOD1_MASK, GDK_KEY_Return, NULL },
 	{ "", NULL, NULL, 0, 0, NULL },
-	{ "Preferences", G_CALLBACK(_hexeditor_on_preferences),
+	{ N_("Preferences"), G_CALLBACK(_hexeditor_on_preferences),
 		GTK_STOCK_PREFERENCES, GDK_CONTROL_MASK, GDK_KEY_P, NULL },
 #endif
 	{ NULL, NULL, NULL, 0, 0, NULL }
