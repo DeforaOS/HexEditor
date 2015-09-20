@@ -655,7 +655,7 @@ static void _open_progress(HexEditor * hexeditor)
 	fraction = hexeditor->offset;
 	fraction = fraction / hexeditor->size;
 	gtk_progress_bar_set_fraction(progress, fraction);
-	snprintf(buf, sizeof(buf), "%.1lf%%", fraction * 100);
+	snprintf(buf, sizeof(buf), "%.1f%%", fraction * 100);
 	gtk_progress_bar_set_text(progress, buf);
 }
 
