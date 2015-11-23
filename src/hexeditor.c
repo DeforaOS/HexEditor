@@ -459,11 +459,11 @@ int hexeditor_load(HexEditor * hexeditor, char const * plugin)
 	if(_hexeditor_plugin_is_enabled(hexeditor, plugin))
 		return 0;
 	if((p = plugin_new(LIBDIR, PACKAGE, "plugins", plugin)) == NULL)
-		return -_hexeditor_error(hexeditor, error_get(), 1);
+		return -_hexeditor_error(hexeditor, error_get(NULL), 1);
 	if((hepd = plugin_lookup(p, "plugin")) == NULL)
 	{
 		plugin_delete(p);
-		return -_hexeditor_error(hexeditor, error_get(), 1);
+		return -_hexeditor_error(hexeditor, error_get(NULL), 1);
 	}
 	if(hepd->init == NULL || hepd->destroy == NULL
 			|| hepd->get_widget == NULL
@@ -471,7 +471,7 @@ int hexeditor_load(HexEditor * hexeditor, char const * plugin)
 	{
 		plugin_delete(p);
 		/* FIXME the error may not be set */
-		return -_hexeditor_error(hexeditor, error_get(), 1);
+		return -_hexeditor_error(hexeditor, error_get(NULL), 1);
 	}
 	widget = hepd->get_widget(hep);
 	gtk_widget_hide(widget);
@@ -1046,7 +1046,7 @@ static int _hexeditor_config_load(HexEditor * hexeditor)
 			== NULL)
 		return -1;
 	if((ret = config_load(hexeditor->config, filename)) != 0)
-		ret = -_hexeditor_error(NULL, error_get(), 1);
+		ret = -_hexeditor_error(NULL, error_get(NULL), 1);
 	free(filename);
 	/* uppercase */
 	if((p = config_get(hexeditor->config, NULL, "uppercase")) != NULL)
