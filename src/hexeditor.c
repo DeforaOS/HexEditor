@@ -871,7 +871,11 @@ static GtkWidget * _properties_widget(HexEditor * hexeditor,
 #endif
 	widget = gtk_label_new(label);
 	gtk_widget_modify_font(widget, hexeditor->bold);
+#if GTK_CHECK_VERSION(3, 0, 0)
+	g_object_set(widget, "halign", GTK_ALIGN_START);
+#else
 	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
+#endif
 	gtk_size_group_add_widget(group, widget);
 	gtk_box_pack_start(GTK_BOX(hbox), widget, FALSE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), value, TRUE, TRUE, 0);
