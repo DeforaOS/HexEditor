@@ -869,7 +869,7 @@ static GtkWidget * _properties_widget(HexEditor * hexeditor,
 	widget = gtk_label_new(label);
 	gtk_widget_override_font(widget, hexeditor->bold);
 #if GTK_CHECK_VERSION(3, 0, 0)
-	g_object_set(widget, "halign", GTK_ALIGN_START);
+	g_object_set(widget, "halign", GTK_ALIGN_START, NULL);
 #else
 	gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.5);
 #endif
