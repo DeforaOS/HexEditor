@@ -35,7 +35,7 @@ static char const _license[] =
 #include "hexeditor.h"
 #include "../config.h"
 #define _(string) gettext(string)
-#define N_(string) (string)
+#define N_(string) string
 
 /* constants */
 #ifndef PROGNAME_HEXEDITOR
@@ -192,11 +192,7 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	pango_font_description_set_weight(hexeditor->bold, PANGO_WEIGHT_BOLD);
 	hexeditor->window = window;
 	/* create the widget */
-#if GTK_CHECK_VERSION(3, 0, 0)
 	hexeditor->widget = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-#else
-	hexeditor->widget = gtk_vbox_new(FALSE, 0);
-#endif
 	vbox = hexeditor->widget;
 	/* toolbar */
 	widget = desktop_toolbar_create(_hexeditor_toolbar, hexeditor, group);
@@ -221,9 +217,9 @@ HexEditor * hexeditor_new(GtkWidget * window, GtkAccelGroup * group,
 	gtk_box_pack_start(GTK_BOX(vbox), hexeditor->infobar, FALSE, TRUE, 0);
 #endif
 	/* view */
-	hpaned = gtk_hpaned_new();
+	hpaned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
 	gtk_paned_set_position(GTK_PANED(hpaned), 500);
-	hbox = gtk_hbox_new(FALSE, 0);
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	/* view: address */
 	widget = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
@@ -293,7 +289,7 @@ static void _new_plugins(HexEditor * hexeditor)
 	char * q;
 	size_t i;
 
-	hexeditor->pl_view = gtk_vbox_new(FALSE, 4);
+	hexeditor->pl_view = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
 	gtk_container_set_border_width(GTK_CONTAINER(hexeditor->pl_view), 4);
 	gtk_widget_set_no_show_all(hexeditor->pl_view, TRUE);
 	hexeditor->pl_store = gtk_list_store_new(HEPC_COUNT, G_TYPE_STRING,
@@ -316,7 +312,7 @@ static void _new_plugins(HexEditor * hexeditor)
 			renderer, "text", HEPC_NAME_DISPLAY, NULL);
 	gtk_box_pack_start(GTK_BOX(hexeditor->pl_view), hexeditor->pl_combo,
 			FALSE, TRUE, 0);
-	hexeditor->pl_box = gtk_vbox_new(FALSE, 4);
+	hexeditor->pl_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
 	gtk_box_pack_start(GTK_BOX(hexeditor->pl_view), hexeditor->pl_box, TRUE,
 			TRUE, 0);
 	hexeditor->pl_helper.hexeditor = hexeditor;
@@ -360,7 +356,7 @@ static void _new_progress(HexEditor * hexeditor)
 			GTK_WIN_POS_CENTER_ON_PARENT);
 	g_signal_connect_swapped(hexeditor->pg_window, "delete-event",
 			G_CALLBACK(_hexeditor_on_progress_delete), hexeditor);
-	hbox = gtk_hbox_new(FALSE, 4);
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
 	hexeditor->pg_progress = gtk_progress_bar_new();
 #if GTK_CHECK_VERSION(3, 0, 0)
 	gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(hexeditor->pg_progress),
@@ -432,9 +428,9 @@ void hexeditor_set_font(HexEditor * hexeditor, char const * font)
 	}
 	else
 		desc = pango_font_description_from_string(font);
-	gtk_widget_modify_font(hexeditor->view_addr, desc);
-	gtk_widget_modify_font(hexeditor->view_hex, desc);
-	gtk_widget_modify_font(hexeditor->view_data, desc);
+	gtk_widget_override_font(hexeditor->view_addr, desc);
+	gtk_widget_override_font(hexeditor->view_hex, desc);
+	gtk_widget_override_font(hexeditor->view_data, desc);
 	pango_font_description_free(desc);
 }
 
@@ -869,13 +865,9 @@ static GtkWidget * _properties_widget(HexEditor * hexeditor,
 	GtkWidget * hbox;
 	GtkWidget * widget;
 
-#if GTK_CHECK_VERSION(3, 0, 0)
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
-#else
-	hbox = gtk_hbox_new(FALSE, 4);
-#endif
 	widget = gtk_label_new(label);
-	gtk_widget_modify_font(widget, hexeditor->bold);
+	gtk_widget_override_font(widget, hexeditor->bold);
 #if GTK_CHECK_VERSION(3, 0, 0)
 	g_object_set(widget, "halign", GTK_ALIGN_START);
 #else

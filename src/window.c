@@ -27,7 +27,7 @@ static char const _license[] =
 #include "window.h"
 #include "../config.h"
 #define _(string) gettext(string)
-#define N_(string) (string)
+#define N_(string) string
 
 
 /* HexEditorWindow */
@@ -213,6 +213,8 @@ static gboolean _hexeditorwindow_on_closex(gpointer data)
 /* hexeditorwindow_on_contents */
 static void _hexeditorwindow_on_contents(gpointer data)
 {
+	(void) data;
+
 	desktop_help_contents(PACKAGE, "hexeditor");
 }
 
