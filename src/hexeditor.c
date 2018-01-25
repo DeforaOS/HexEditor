@@ -362,6 +362,11 @@ static void _new_progress(HexEditor * hexeditor)
 			G_CALLBACK(_hexeditor_on_progress_delete), hexeditor);
 	hbox = gtk_hbox_new(FALSE, 4);
 	hexeditor->pg_progress = gtk_progress_bar_new();
+#if GTK_CHECK_VERSION(3, 0, 0)
+	gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(hexeditor->pg_progress),
+			TRUE);
+#endif
+	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(hexeditor->pg_progress), "");
 	gtk_box_pack_start(GTK_BOX(hbox), hexeditor->pg_progress, FALSE, TRUE,
 			0);
 	widget = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
