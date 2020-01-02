@@ -816,7 +816,7 @@ void hexeditor_show_properties(HexEditor * hexeditor, gboolean show)
 			"");
 #if GTK_CHECK_VERSION(2, 10, 0)
 	gtk_message_dialog_set_image(GTK_MESSAGE_DIALOG(dialog),
-			gtk_image_new_from_stock(GTK_STOCK_PROPERTIES,
+			gtk_image_new_from_icon_name("gtk-properties",
 				GTK_ICON_SIZE_DIALOG));
 #endif
 	if(hexeditor->filename == NULL)
